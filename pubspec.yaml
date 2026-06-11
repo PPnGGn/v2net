@@ -7,6 +7,7 @@ environment:
   sdk: ^3.11.4
 
 dependencies:
+  go_router: ^17.3.0
   flutter:
     sdk: flutter
 
@@ -14,6 +15,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  pigeon: ^26.3.4
 
 flutter:
   uses-material-design: true
