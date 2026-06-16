@@ -30,7 +30,6 @@ class _HomePageState extends State<HomePage> {
     try {
       VpnResult result;
 
-      // Выбираем метод в зависимости от текущего состояния
       if (_isConnected) {
         print('Отправляю команду stop()...');
         result = await _vpn.stop();
@@ -38,19 +37,21 @@ class _HomePageState extends State<HomePage> {
         print('Отправляю команду start()...');
         result = await _vpn.start();
       }
-
-      // Если Kotlin ответил успехом, меняем UI
-      if (result.successful == true) {
+      if (result.successful ?? false) {
+        // Идеальный сценарий: туннель поднят (или закрыт)
         setState(() {
           _isConnected = !_isConnected;
         });
-        print('VPN: Успешно! Состояние изменено.');
+        print('VPN: Успешно! Состояние изменено на $_isConnected.');
       } else {
-        print('VPN Ошибка: ${result.error}');
+        // Штатный отказ: пользователь нажал "Отмена" в системном окне прав.
+        // Это не баг, UI просто не меняет свое состояние (ползунок отщелкивается назад).
+        print('VPN: Операция отменена. Права не предоставлены.');
       }
     } catch (e) {
-      // Ловим краши от натива
-      print('VPN: Критическая ошибка моста: $e');
+      // А вот здесь мы ловим реальные краши:
+      // отвалился канал Pigeon, ошибка сериализации типов, падение в Kotlin
+      print('VPN: Критическая ошибка нативного моста: $e');
     }
   }
 

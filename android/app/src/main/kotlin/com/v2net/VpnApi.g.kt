@@ -311,14 +311,15 @@ private open class VpnApiPigeonCodec : StandardMessageCodec() {
   }
 }
 
+
 /**
  * Вызов из Flutter в натив
  *
  * Generated interface from Pigeon that represents a handler of messages from Flutter.
  */
 interface VpnConnection {
-  fun start(): VpnResult
-  fun stop(): VpnResult
+  fun start(callback: (Result<VpnResult>) -> Unit)
+  fun stop(callback: (Result<VpnResult>) -> Unit)
 
   companion object {
     /** The codec used by VpnConnection. */
@@ -333,12 +334,15 @@ interface VpnConnection {
         val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.v2net.VpnConnection.start$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { _, reply ->
-            val wrapped: List<Any?> = try {
-              listOf(api.start())
-            } catch (exception: Throwable) {
-              VpnApiPigeonUtils.wrapError(exception)
+            api.start{ result: Result<VpnResult> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(VpnApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(VpnApiPigeonUtils.wrapResult(data))
+              }
             }
-            reply.reply(wrapped)
           }
         } else {
           channel.setMessageHandler(null)
@@ -348,12 +352,15 @@ interface VpnConnection {
         val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.v2net.VpnConnection.stop$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { _, reply ->
-            val wrapped: List<Any?> = try {
-              listOf(api.stop())
-            } catch (exception: Throwable) {
-              VpnApiPigeonUtils.wrapError(exception)
+            api.stop{ result: Result<VpnResult> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(VpnApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(VpnApiPigeonUtils.wrapResult(data))
+              }
             }
-            reply.reply(wrapped)
           }
         } else {
           channel.setMessageHandler(null)

@@ -13,7 +13,9 @@ class VpnResult{
 /// Вызов из Flutter в натив
 @HostApi()
 abstract class VpnConnection {
+  @async
   VpnResult start();
+  @async
   VpnResult stop();
 }
 
