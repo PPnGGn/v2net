@@ -4,28 +4,61 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import android.util.Log
 
-// 1. Добавляем VpnConnection через запятую
+import android.net.VpnService
+import android.content.Intent
+import android.app.Activity
+
+// Native bridge for Flutter (Pigeon)
 class MainActivity : FlutterActivity(), VpnConnection {
 
-    // 2. Регистрируем наш канал связи при запуске движка
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        // Initialize communication channel
         VpnConnection.setUp(flutterEngine.dartExecutor.binaryMessenger, this)
     }
 
-    // 3. Реализуем метод start
     override fun start(): VpnResult {
-        Log.d("VPN_BRIDGE", "Команда start() получена нативом!")
+        Log.d("VPN_BRIDGE", "Starting VPN...")
 
-        val result = VpnResult()
+        // Check for system VPN permissions
+        val intent: Intent? = VpnService.prepare(this)
+
+        if (intent != null) {
+            // No permission, request from system.
+            // 24 is our requestCode to handle the result.
+            startActivityForResult(intent, 24)
+        } else {
+            // Permission already granted, start service
+            val serviceIntent = Intent(this, V2RayVpnService::class.java)
+            startService(serviceIntent)
+        }
+
         return VpnResult(successful = true)
     }
 
-    // 4. Реализуем метод stop
     override fun stop(): VpnResult {
-        Log.d("VPN_BRIDGE", "Команда stop() получена нативом!")
+        Log.d("VPN_BRIDGE", "Stopping VPN...")
 
-        val result = VpnResult()
+        // Notify service to stop itself
+        val serviceIntent = Intent(this, V2RayVpnService::class.java)
+        serviceIntent.action = "ACTION_STOP_VPN"
+        startService(serviceIntent) 
+
         return VpnResult(successful = true)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        // Handle VPN permission request result
+        if (requestCode == 24) {
+            if (resultCode == Activity.RESULT_OK) {
+                Log.d("VPN_BRIDGE", "Permission granted, starting service")
+                val serviceIntent = Intent(this, V2RayVpnService::class.java)
+                startService(serviceIntent)
+            } else {
+                Log.d("VPN_BRIDGE", "Permission denied by user")
+            }
+        }
     }
 }
