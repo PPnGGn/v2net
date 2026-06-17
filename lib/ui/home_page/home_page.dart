@@ -38,19 +38,17 @@ class _HomePageState extends State<HomePage> {
         result = await _vpn.start();
       }
       if (result.successful ?? false) {
-        // Идеальный сценарий: туннель поднят (или закрыт)
+        // успех — переключаем состояние
         setState(() {
           _isConnected = !_isConnected;
         });
         print('VPN: Успешно! Состояние изменено на $_isConnected.');
       } else {
-        // Штатный отказ: пользователь нажал "Отмена" в системном окне прав.
-        // Это не баг, UI просто не меняет свое состояние (ползунок отщелкивается назад).
+        // пользователь отклонил VpnService.prepare — UI не трогаем
         print('VPN: Операция отменена. Права не предоставлены.');
       }
     } catch (e) {
-      // А вот здесь мы ловим реальные краши:
-      // отвалился канал Pigeon, ошибка сериализации типов, падение в Kotlin
+      // Pigeon/натив: channel error, сериализация, crash в Kotlin
       print('VPN: Критическая ошибка нативного моста: $e');
     }
   }
@@ -66,7 +64,7 @@ class _HomePageState extends State<HomePage> {
               children: [
                 ConnectionButton(
                   isConnected: _isConnected,
-                  onTap: _onVpnStart, // Передаем ссылку на функцию
+                  onTap: _onVpnStart,
                 ),
                 Gap(height: 12),
                 Expansible(
@@ -121,12 +119,12 @@ Container _bodyWidgetItemBuilder(BuildContext context, int index) {
 
 class ConnectionButton extends StatelessWidget {
   final VoidCallback onTap;
-  final bool isConnected; // Добавили параметр состояния
+  final bool isConnected;
 
   const ConnectionButton({
     super.key,
     required this.onTap,
-    required this.isConnected, // Сделали обязательным
+    required this.isConnected,
   });
 
   @override
@@ -141,7 +139,6 @@ class ConnectionButton extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            // Меняем цвет в зависимости от ответа из Kotlin
             color: isConnected ? Colors.red : Colors.green,
           ),
           child: const Icon(Icons.power_settings_new, size: 40, color: Colors.white),
