@@ -122,7 +122,7 @@ class VpnMessage {
     this.connected,
   });
 
-  String? connected;
+  bool? connected;
 
   List<Object?> _toList() {
     return <Object?>[
@@ -136,7 +136,7 @@ class VpnMessage {
   static VpnMessage decode(Object result) {
     result as List<Object?>;
     return VpnMessage(
-      connected: result[0] as String?,
+      connected: result[0] as bool?,
     );
   }
 
@@ -253,14 +253,14 @@ class VpnConnection {
 
   final String pigeonVar_messageChannelSuffix;
 
-  Future<VpnResult> start() async {
+  Future<VpnResult> start(String configJson) async {
     final pigeonVar_channelName = 'dev.flutter.pigeon.v2net.VpnConnection.start$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
       binaryMessenger: pigeonVar_binaryMessenger,
     );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[configJson]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(

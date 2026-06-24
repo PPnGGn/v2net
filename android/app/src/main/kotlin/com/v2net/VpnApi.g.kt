@@ -207,12 +207,12 @@ class FlutterError (
 
 /** Generated class from Pigeon that represents data sent in messages. */
 data class VpnMessage (
-  val connected: String? = null
+  val connected: Boolean? = null
 )
  {
   companion object {
     fun fromList(pigeonVar_list: List<Any?>): VpnMessage {
-      val connected = pigeonVar_list[0] as String?
+      val connected = pigeonVar_list[0] as Boolean?
       return VpnMessage(connected)
     }
   }
@@ -318,7 +318,7 @@ private open class VpnApiPigeonCodec : StandardMessageCodec() {
  * Generated interface from Pigeon that represents a handler of messages from Flutter.
  */
 interface VpnConnection {
-  fun start(callback: (Result<VpnResult>) -> Unit)
+  fun start(configJson: String, callback: (Result<VpnResult>) -> Unit)
   fun stop(callback: (Result<VpnResult>) -> Unit)
 
   companion object {
@@ -333,8 +333,10 @@ interface VpnConnection {
       run {
         val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.v2net.VpnConnection.start$separatedMessageChannelSuffix", codec)
         if (api != null) {
-          channel.setMessageHandler { _, reply ->
-            api.start{ result: Result<VpnResult> ->
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val configJsonArg = args[0] as String
+            api.start(configJsonArg) { result: Result<VpnResult> ->
               val error = result.exceptionOrNull()
               if (error != null) {
                 reply.reply(VpnApiPigeonUtils.wrapError(error))

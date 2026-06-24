@@ -77,7 +77,6 @@ class V2RayVpnService : VpnService() {
         }
 
         // закрываем TUN, трафик снова идёт мимо VPN
-        localTunnel?.close()
         localTunnel = null
         stopSelf()
     }
