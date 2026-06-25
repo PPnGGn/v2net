@@ -1,5 +1,5 @@
 import 'package:go_router/go_router.dart';
-import 'package:v2net/ui/home_page/home_page.dart';
+import 'package:v2net/ui/home/home_page.dart';
 
 final GoRouter appRouter = GoRouter(
   routes: [

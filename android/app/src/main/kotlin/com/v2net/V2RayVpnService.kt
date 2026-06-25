@@ -5,12 +5,15 @@ import android.net.VpnService
 import android.os.ParcelFileDescriptor
 import android.util.Log
 
-// Go-биндинг v2netcore (gomobile).
+// v2netcore gomobile bindings
 import v2netcore.V2netcore
 
 class V2RayVpnService : VpnService() {
 
     private var localTunnel: ParcelFileDescriptor? = null
+
+    // guard duplicate stop (onRevoke + onDestroy)
+    private var isStopping = false
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == "ACTION_STOP_VPN") {
@@ -19,7 +22,6 @@ class V2RayVpnService : VpnService() {
             return START_NOT_STICKY
         }
 
-        // JSON-конфиг из MainActivity (extra XRAY_CONFIG).
         val configJson = intent?.getStringExtra("XRAY_CONFIG")
         if (configJson == null) {
             Log.e("VPN_SERVICE", "Config is missing. Aborting.")
@@ -27,36 +29,28 @@ class V2RayVpnService : VpnService() {
         }
 
         Log.d("VPN_SERVICE", "Starting service and core...")
+        isStopping = false
         setupVpn(configJson)
-        
-        // START_STICKY: ОС перезапустит сервис после kill по памяти.
-        // Без Intent в extras перезапуск упадёт — нужна отдельная обработка (TODO).
+
         return START_STICKY
     }
 
     private fun setupVpn(configJson: String) {
         try {
-            // 1. Старт Xray: JSON -> protobuf -> inbound (порт из конфига, сейчас 10808).
-            // Битый JSON — exception из Go, ловим в catch ниже.
             V2netcore.startXray(configJson)
             Log.d("VPN_SERVICE", "Xray core started successfully.")
 
-            // 2. TUN-интерфейс.
             localTunnel = Builder()
-                .addAddress("10.0.0.2", 24) // адрес устройства в туннеле
-                .addDnsServer("8.8.8.8")    // DNS внутри туннеля, иначе утечки
-                .addRoute("0.0.0.0", 0)     // весь IPv4
-                .addDisallowedApplication(packageName) // иначе Xray ходит в свой же TUN — петля
-                                                      // packageName = "com.v2net"
-                .setSession("v2net")        // имя в настройках VPN Android
-                .setMtu(1500)               // без MTU TCP фрагментируется, скорость падает
+                .addAddress("10.0.0.2", 24)
+                .addDnsServer("8.8.8.8")
+                .addRoute("0.0.0.0", 0)
+                .addDisallowedApplication(packageName)
+                .setSession("v2net")
+                .setMtu(1500)
                 .establish()
 
-            // 3. fd TUN-устройства — через него читаются сырые IP-пакеты.
-            val fd = localTunnel?.fd ?: throw Exception("Failed to get TUN FD")
+            val fd = localTunnel?.detachFd() ?: throw Exception("Failed to get TUN FD")
 
-            // 4. tun2socks: fd -> SOCKS на localhost:10808 (inbound Xray).
-            // toLong() — gomobile мапит Go int в Kotlin Long.
             V2netcore.startTun(fd.toLong(), 10808L)
             Log.d("VPN_SERVICE", "Tun2Socks linked to fd: $fd on port 10808.")
 
@@ -66,17 +60,26 @@ class V2RayVpnService : VpnService() {
         }
     }
 
+    // another VPN took over
+    override fun onRevoke() {
+        Log.w("VPN_SERVICE", "VPN revoked by system (another VPN started). Emergency shutdown.")
+        stopVpn()
+        super.onRevoke()
+    }
+
     private fun stopVpn() {
+        if (isStopping) return
+        isStopping = true
+
         Log.d("VPN_SERVICE", "Shutting down everything...")
-        
+
         try {
-            // tun2socks + xray; иначе 10808 останется занят.
+            // core closes the TUN fd on the native side
             V2netcore.stopAll()
         } catch (e: Exception) {
             Log.e("VPN_SERVICE", "Failed to stop core: ${e.message}")
         }
 
-        // закрываем TUN, трафик снова идёт мимо VPN
         localTunnel = null
         stopSelf()
     }

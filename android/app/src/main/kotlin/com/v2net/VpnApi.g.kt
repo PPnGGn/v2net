@@ -313,7 +313,7 @@ private open class VpnApiPigeonCodec : StandardMessageCodec() {
 
 
 /**
- * Вызов из Flutter в натив
+ * Flutter -> native
  *
  * Generated interface from Pigeon that represents a handler of messages from Flutter.
  */
@@ -372,7 +372,7 @@ interface VpnConnection {
   }
 }
 /**
- * Вызов из натива вo Flutter
+ * native -> Flutter
  *
  * Generated class from Pigeon that represents Flutter messages that can be called from Kotlin.
  */

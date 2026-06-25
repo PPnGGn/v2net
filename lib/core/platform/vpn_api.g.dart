@@ -239,7 +239,7 @@ class _PigeonCodec extends StandardMessageCodec {
   }
 }
 
-/// Вызов из Flutter в натив
+/// Flutter -> native
 class VpnConnection {
   /// Constructor for [VpnConnection].  The [binaryMessenger] named argument is
   /// available for dependency injection.  If it is left null, the default
@@ -292,7 +292,7 @@ class VpnConnection {
   }
 }
 
-/// Вызов из натива вo Flutter
+/// native -> Flutter
 abstract class ConnectionReceiver {
   static const MessageCodec<Object?> pigeonChannelCodec = _PigeonCodec();
 

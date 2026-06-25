@@ -13,7 +13,6 @@ class MainActivity : FlutterActivity(), VpnConnection {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        // Инициализация моста Pigeon
         VpnConnection.setUp(flutterEngine.dartExecutor.binaryMessenger, this)
     }
 
@@ -23,12 +22,10 @@ class MainActivity : FlutterActivity(), VpnConnection {
         val intent = VpnService.prepare(this)
 
         if (intent != null) {
-            // Права не выданы. Запоминаем коллбэк и конфиг.
             pendingVpnCallback = callback
             pendingConfig = configJson
             startActivityForResult(intent, 24)
         } else {
-            // Права уже есть. Используем абсолютные пути к классам.
             val serviceIntent = android.content.Intent(applicationContext, com.v2net.V2RayVpnService::class.java)
             serviceIntent.putExtra("XRAY_CONFIG", configJson)
             startService(serviceIntent)
@@ -69,7 +66,6 @@ class MainActivity : FlutterActivity(), VpnConnection {
                 Log.d("VPN_BRIDGE", "Permission denied by user")
                 pendingVpnCallback?.invoke(Result.success(VpnResult(successful = false)))
             }
-            // Зачищаем состояние
             pendingVpnCallback = null
             pendingConfig = null
         }
