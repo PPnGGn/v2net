@@ -11,10 +11,10 @@ abstract class IVpnRepository {
 
 @LazySingleton(as: IVpnRepository)
 class VpnRepositoryImpl implements IVpnRepository {
-  final VpnConnection _vpnConnection;
   final Talker _talker;
+  final VpnConnection _vpnConnection;
 
-  VpnRepositoryImpl(this._talker) : _vpnConnection = VpnConnection();
+  VpnRepositoryImpl(this._talker, this._vpnConnection);
 
   @override
   Future<Result<void>> start(VpnServer server) async {

@@ -14,7 +14,7 @@ class VpnServiceCubit extends Cubit<VpnServiceState> {
   VpnServiceCubit({
     required IVpnRepository repository,
     required Talker talker,
-  })  : _repository = repository,
+  })  : _repository = repository, 
         _talker = talker,
   
         super(const VpnServiceState.disconnected());
