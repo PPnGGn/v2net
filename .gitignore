@@ -1,4 +1,5 @@
 # Miscellaneous
+plan/
 *.class
 *.log
 *.pyc

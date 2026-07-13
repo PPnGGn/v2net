@@ -8,6 +8,7 @@ part of 'vpn_server.dart';
 
 _VpnServer _$VpnServerFromJson(Map<String, dynamic> json) => _VpnServer(
   id: json['id'] as String,
+  subscriptionId: json['subscriptionId'] as String,
   countryCode: json['countryCode'] as String,
   title: json['title'] as String,
   rawCode: json['rawCode'] as String,
@@ -16,6 +17,7 @@ _VpnServer _$VpnServerFromJson(Map<String, dynamic> json) => _VpnServer(
 Map<String, dynamic> _$VpnServerToJson(_VpnServer instance) =>
     <String, dynamic>{
       'id': instance.id,
+      'subscriptionId': instance.subscriptionId,
       'countryCode': instance.countryCode,
       'title': instance.title,
       'rawCode': instance.rawCode,

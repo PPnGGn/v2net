@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'vpn_service_cubit.dart';
+part of 'vpn_cubit.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -12,7 +12,7 @@ part of 'vpn_service_cubit.dart';
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
-mixin _$VpnServiceState {
+mixin _$VpnState {
 
 
 
@@ -20,7 +20,7 @@ mixin _$VpnServiceState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VpnServiceState);
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VpnState);
 }
 
 
@@ -29,20 +29,20 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'VpnServiceState()';
+  return 'VpnState()';
 }
 
 
 }
 
 /// @nodoc
-class $VpnServiceStateCopyWith<$Res>  {
-$VpnServiceStateCopyWith(VpnServiceState _, $Res Function(VpnServiceState) __);
+class $VpnStateCopyWith<$Res>  {
+$VpnStateCopyWith(VpnState _, $Res Function(VpnState) __);
 }
 
 
-/// Adds pattern-matching-related methods to [VpnServiceState].
-extension VpnServiceStatePatterns on VpnServiceState {
+/// Adds pattern-matching-related methods to [VpnState].
+extension VpnStatePatterns on VpnState {
 /// A variant of `map` that fallback to returning `orElse`.
 ///
 /// It is equivalent to doing:
@@ -198,7 +198,7 @@ return error(_that.message);case _:
 /// @nodoc
 
 
-class _Initial implements VpnServiceState {
+class _Initial implements VpnState {
   const _Initial();
   
 
@@ -218,7 +218,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'VpnServiceState.initial()';
+  return 'VpnState.initial()';
 }
 
 
@@ -230,7 +230,7 @@ String toString() {
 /// @nodoc
 
 
-class _Connecting implements VpnServiceState {
+class _Connecting implements VpnState {
   const _Connecting();
   
 
@@ -250,7 +250,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'VpnServiceState.connecting()';
+  return 'VpnState.connecting()';
 }
 
 
@@ -262,13 +262,13 @@ String toString() {
 /// @nodoc
 
 
-class _Connected implements VpnServiceState {
+class _Connected implements VpnState {
   const _Connected(this.server);
   
 
  final  VpnServer server;
 
-/// Create a copy of VpnServiceState
+/// Create a copy of VpnState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
@@ -287,14 +287,14 @@ int get hashCode => Object.hash(runtimeType,server);
 
 @override
 String toString() {
-  return 'VpnServiceState.connected(server: $server)';
+  return 'VpnState.connected(server: $server)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class _$ConnectedCopyWith<$Res> implements $VpnServiceStateCopyWith<$Res> {
+abstract mixin class _$ConnectedCopyWith<$Res> implements $VpnStateCopyWith<$Res> {
   factory _$ConnectedCopyWith(_Connected value, $Res Function(_Connected) _then) = __$ConnectedCopyWithImpl;
 @useResult
 $Res call({
@@ -313,7 +313,7 @@ class __$ConnectedCopyWithImpl<$Res>
   final _Connected _self;
   final $Res Function(_Connected) _then;
 
-/// Create a copy of VpnServiceState
+/// Create a copy of VpnState
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') $Res call({Object? server = null,}) {
   return _then(_Connected(
@@ -322,7 +322,7 @@ as VpnServer,
   ));
 }
 
-/// Create a copy of VpnServiceState
+/// Create a copy of VpnState
 /// with the given fields replaced by the non-null parameter values.
 @override
 @pragma('vm:prefer-inline')
@@ -337,7 +337,7 @@ $VpnServerCopyWith<$Res> get server {
 /// @nodoc
 
 
-class _Disconnected implements VpnServiceState {
+class _Disconnected implements VpnState {
   const _Disconnected();
   
 
@@ -357,7 +357,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'VpnServiceState.disconnected()';
+  return 'VpnState.disconnected()';
 }
 
 
@@ -369,13 +369,13 @@ String toString() {
 /// @nodoc
 
 
-class _Error implements VpnServiceState {
+class _Error implements VpnState {
   const _Error(this.message);
   
 
  final  String message;
 
-/// Create a copy of VpnServiceState
+/// Create a copy of VpnState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
@@ -394,14 +394,14 @@ int get hashCode => Object.hash(runtimeType,message);
 
 @override
 String toString() {
-  return 'VpnServiceState.error(message: $message)';
+  return 'VpnState.error(message: $message)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class _$ErrorCopyWith<$Res> implements $VpnServiceStateCopyWith<$Res> {
+abstract mixin class _$ErrorCopyWith<$Res> implements $VpnStateCopyWith<$Res> {
   factory _$ErrorCopyWith(_Error value, $Res Function(_Error) _then) = __$ErrorCopyWithImpl;
 @useResult
 $Res call({
@@ -420,7 +420,7 @@ class __$ErrorCopyWithImpl<$Res>
   final _Error _self;
   final $Res Function(_Error) _then;
 
-/// Create a copy of VpnServiceState
+/// Create a copy of VpnState
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') $Res call({Object? message = null,}) {
   return _then(_Error(

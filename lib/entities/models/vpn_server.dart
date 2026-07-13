@@ -7,6 +7,7 @@ part 'vpn_server.g.dart';
 abstract class VpnServer with _$VpnServer {
   const factory VpnServer({
     required String id,
+    required String subscriptionId, 
     required String countryCode,
     required String title,
     required String rawCode,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:v2net/core/di/injector.dart';
-import 'package:v2net/core/services/vpn_service/vpn_service_cubit.dart';
+import 'package:v2net/core/cubits/vpn/vpn_cubit.dart';
 import 'package:v2net/entities/models/vpn_server.dart';
 
 class HomePage extends StatelessWidget {
@@ -200,17 +200,17 @@ class HomePage extends StatelessWidget {
         ]
     }
 }
-''',
+''', subscriptionId: '',
   );
 
   @override
   Widget build(BuildContext context) {
-    final cubit = getIt<VpnServiceCubit>();
+    final cubit = getIt<VpnCubit>();
 
     return Scaffold(
       appBar: AppBar(title: const Text('V2Net MVP'), centerTitle: true),
       body: Center(
-        child: BlocBuilder<VpnServiceCubit, VpnServiceState>(
+        child: BlocBuilder<VpnCubit, VpnState>(
           bloc: cubit,
           builder: (context, state) {
             return state.when(
@@ -233,7 +233,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildConnectState(VpnServiceCubit cubit) {
+  Widget _buildConnectState(VpnCubit cubit) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -252,7 +252,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildConnectedState(VpnServiceCubit cubit, VpnServer server) {
+  Widget _buildConnectedState(VpnCubit cubit, VpnServer server) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -277,7 +277,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildErrorState(VpnServiceCubit cubit, String message) {
+  Widget _buildErrorState(VpnCubit cubit, String message) {
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(

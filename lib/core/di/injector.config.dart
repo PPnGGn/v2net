@@ -13,9 +13,9 @@ import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:talker_flutter/talker_flutter.dart' as _i207;
 
+import '../cubits/vpn/vpn_cubit.dart' as _i325;
 import '../platform/vpn_api.g.dart' as _i1047;
 import '../repositories/vpn_repository.dart' as _i230;
-import '../services/vpn_service/vpn_service_cubit.dart' as _i822;
 import 'logger_module.dart' as _i987;
 import 'vpn_module.dart' as _i731;
 
@@ -36,8 +36,8 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i1047.VpnConnection>(),
       ),
     );
-    gh.lazySingleton<_i822.VpnServiceCubit>(
-      () => _i822.VpnServiceCubit(
+    gh.lazySingleton<_i325.VpnCubit>(
+      () => _i325.VpnCubit(
         repository: gh<_i230.IVpnRepository>(),
         talker: gh<_i207.Talker>(),
       ),
