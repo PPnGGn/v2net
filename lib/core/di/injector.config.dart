@@ -16,6 +16,8 @@ import 'package:talker_flutter/talker_flutter.dart' as _i207;
 import '../cubits/vpn/vpn_cubit.dart' as _i325;
 import '../platform/vpn_api.g.dart' as _i1047;
 import '../repositories/vpn_repository.dart' as _i230;
+import '../services/subscription_parser/subscription_parser_service.dart'
+    as _i755;
 import 'logger_module.dart' as _i987;
 import 'vpn_module.dart' as _i731;
 
@@ -30,6 +32,9 @@ extension GetItInjectableX on _i174.GetIt {
     final vpnModule = _$VpnModule();
     gh.lazySingleton<_i207.Talker>(() => loggerModule.talker);
     gh.lazySingleton<_i1047.VpnConnection>(() => vpnModule.vpnConnection);
+    gh.lazySingleton<_i755.ISubscriptionParserService>(
+      () => _i755.SubscriptionParserServiceImpl(gh<_i207.Talker>()),
+    );
     gh.lazySingleton<_i230.IVpnRepository>(
       () => _i230.VpnRepositoryImpl(
         gh<_i207.Talker>(),
