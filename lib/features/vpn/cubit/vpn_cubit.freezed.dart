@@ -55,11 +55,10 @@ extension VpnStatePatterns on VpnState {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( _Initial value)?  initial,TResult Function( _Connecting value)?  connecting,TResult Function( _Connected value)?  connected,TResult Function( _Disconnected value)?  disconnected,TResult Function( _Error value)?  error,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( _Connecting value)?  connecting,TResult Function( _Connected value)?  connected,TResult Function( _Disconnected value)?  disconnected,TResult Function( _Error value)?  error,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
-case _Initial() when initial != null:
-return initial(_that);case _Connecting() when connecting != null:
+case _Connecting() when connecting != null:
 return connecting(_that);case _Connected() when connected != null:
 return connected(_that);case _Disconnected() when disconnected != null:
 return disconnected(_that);case _Error() when error != null:
@@ -81,11 +80,10 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( _Initial value)  initial,required TResult Function( _Connecting value)  connecting,required TResult Function( _Connected value)  connected,required TResult Function( _Disconnected value)  disconnected,required TResult Function( _Error value)  error,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( _Connecting value)  connecting,required TResult Function( _Connected value)  connected,required TResult Function( _Disconnected value)  disconnected,required TResult Function( _Error value)  error,}){
 final _that = this;
 switch (_that) {
-case _Initial():
-return initial(_that);case _Connecting():
+case _Connecting():
 return connecting(_that);case _Connected():
 return connected(_that);case _Disconnected():
 return disconnected(_that);case _Error():
@@ -106,11 +104,10 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( _Initial value)?  initial,TResult? Function( _Connecting value)?  connecting,TResult? Function( _Connected value)?  connected,TResult? Function( _Disconnected value)?  disconnected,TResult? Function( _Error value)?  error,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( _Connecting value)?  connecting,TResult? Function( _Connected value)?  connected,TResult? Function( _Disconnected value)?  disconnected,TResult? Function( _Error value)?  error,}){
 final _that = this;
 switch (_that) {
-case _Initial() when initial != null:
-return initial(_that);case _Connecting() when connecting != null:
+case _Connecting() when connecting != null:
 return connecting(_that);case _Connected() when connected != null:
 return connected(_that);case _Disconnected() when disconnected != null:
 return disconnected(_that);case _Error() when error != null:
@@ -131,10 +128,9 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  connecting,TResult Function( VpnServer server)?  connected,TResult Function()?  disconnected,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  connecting,TResult Function( VpnServer server)?  connected,TResult Function()?  disconnected,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
-case _Initial() when initial != null:
-return initial();case _Connecting() when connecting != null:
+case _Connecting() when connecting != null:
 return connecting();case _Connected() when connected != null:
 return connected(_that.server);case _Disconnected() when disconnected != null:
 return disconnected();case _Error() when error != null:
@@ -156,10 +152,9 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  connecting,required TResult Function( VpnServer server)  connected,required TResult Function()  disconnected,required TResult Function( String message)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  connecting,required TResult Function( VpnServer server)  connected,required TResult Function()  disconnected,required TResult Function( String message)  error,}) {final _that = this;
 switch (_that) {
-case _Initial():
-return initial();case _Connecting():
+case _Connecting():
 return connecting();case _Connected():
 return connected(_that.server);case _Disconnected():
 return disconnected();case _Error():
@@ -180,10 +175,9 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  connecting,TResult? Function( VpnServer server)?  connected,TResult? Function()?  disconnected,TResult? Function( String message)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  connecting,TResult? Function( VpnServer server)?  connected,TResult? Function()?  disconnected,TResult? Function( String message)?  error,}) {final _that = this;
 switch (_that) {
-case _Initial() when initial != null:
-return initial();case _Connecting() when connecting != null:
+case _Connecting() when connecting != null:
 return connecting();case _Connected() when connected != null:
 return connected(_that.server);case _Disconnected() when disconnected != null:
 return disconnected();case _Error() when error != null:
@@ -194,38 +188,6 @@ return error(_that.message);case _:
 }
 
 }
-
-/// @nodoc
-
-
-class _Initial implements VpnState {
-  const _Initial();
-  
-
-
-
-
-
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Initial);
-}
-
-
-@override
-int get hashCode => runtimeType.hashCode;
-
-@override
-String toString() {
-  return 'VpnState.initial()';
-}
-
-
-}
-
-
-
 
 /// @nodoc
 

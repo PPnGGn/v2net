@@ -1,22 +1,20 @@
 import 'package:injectable/injectable.dart';
 import 'package:talker_flutter/talker_flutter.dart';
-import 'package:v2net/core/common/result.dart';
-import 'package:v2net/core/platform/vpn_api.g.dart';
-import 'package:v2net/entities/models/vpn_server.dart';
+import 'package:v2net/core/models/vpn_server.dart';
+import 'package:v2net/core/result.dart';
+import 'package:v2net/features/vpn/data/vpn_api.g.dart';
+import 'package:v2net/features/vpn/data/vpn_status_receiver.dart';
 
-abstract class IVpnRepository {
-  Future<Result<void>> start(VpnServer server);
-  Future<Result<void>> stop();
-}
-
-@LazySingleton(as: IVpnRepository)
-class VpnRepositoryImpl implements IVpnRepository {
+@lazySingleton
+class VpnRepository {
   final Talker _talker;
   final VpnConnection _vpnConnection;
+  final VpnStatusReceiver _statusReceiver;
 
-  VpnRepositoryImpl(this._talker, this._vpnConnection);
+  VpnRepository(this._talker, this._vpnConnection, this._statusReceiver);
 
-  @override
+  Stream<bool> get connectionStatus => _statusReceiver.status;
+
   Future<Result<void>> start(VpnServer server) async {
     try {
       _talker.debug('Попытка запуска VPN с сервером: ${server.title}');
@@ -36,7 +34,6 @@ class VpnRepositoryImpl implements IVpnRepository {
     }
   }
 
-  @override
   Future<Result<void>> stop() async {
     try {
       _talker.debug('Остановка VPN...');

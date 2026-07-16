@@ -14,6 +14,12 @@ class MainActivity : FlutterActivity(), VpnConnection {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         VpnConnection.setUp(flutterEngine.dartExecutor.binaryMessenger, this)
+        VpnEventBridge.receiver = ConnectionReceiver(flutterEngine.dartExecutor.binaryMessenger)
+    }
+
+    override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
+        VpnEventBridge.receiver = null
+        super.cleanUpFlutterEngine(flutterEngine)
     }
 
     override fun start(configJson: String, callback: (Result<VpnResult>) -> Unit) {

@@ -1,5 +1,5 @@
 import 'package:talker_flutter/talker_flutter.dart';
-import 'package:v2net/entities/models/vpn_server.dart';
+import 'package:v2net/core/models/vpn_server.dart';
 import 'country_code_extractor.dart';
 import 'xray_config_builder.dart';
 

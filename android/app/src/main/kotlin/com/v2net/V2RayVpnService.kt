@@ -54,6 +54,8 @@ class V2RayVpnService : VpnService() {
             V2netcore.startTun(fd.toLong(), 10808L)
             Log.d("VPN_SERVICE", "Tun2Socks linked to fd: $fd on port 10808.")
 
+            VpnEventBridge.notifyStatus(true)
+
         } catch (e: Exception) {
             Log.e("VPN_SERVICE", "Critical error in setupVpn: ${e.message}")
             stopVpn()
@@ -81,6 +83,10 @@ class V2RayVpnService : VpnService() {
         }
 
         localTunnel = null
+
+        // single call site: covers explicit stop, onRevoke, onDestroy, setupVpn failure
+        VpnEventBridge.notifyStatus(false)
+
         stopSelf()
     }
 
