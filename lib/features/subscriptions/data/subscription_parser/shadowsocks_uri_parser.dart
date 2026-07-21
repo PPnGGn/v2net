@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:v2net/core/models/vpn_server/vpn_server.dart';
 import 'country_code_extractor.dart';
@@ -18,7 +17,6 @@ class ShadowsocksUriParser {
 
   bool isShadowsocks(String s) => s.trim().toLowerCase().startsWith('ss://');
 
-  // Same idea as the vless parser: one link per line, bad ones just get skipped.
   List<VpnServer> parseLines(String text, String sourceId) {
     final lines = text
         .split(RegExp(r'\r?\n'))
@@ -40,7 +38,6 @@ class ShadowsocksUriParser {
   VpnServer? _parseOne(String line, String sourceId) {
     var body = line.substring('ss://'.length);
 
-    // Trailing #tag is the human-readable title.
     String title = '';
     final hashIndex = body.indexOf('#');
     if (hashIndex >= 0) {
@@ -62,7 +59,7 @@ class ShadowsocksUriParser {
       (method, password) = creds;
 
       var hostPart = body.substring(atIndex + 1);
-      // Drop plugin path/query — we don't support plugins.
+      // no plugin support, cut off the path/query if there is one
       final cut = hostPart.indexOf(RegExp(r'[/?]'));
       if (cut >= 0) hostPart = hostPart.substring(0, cut);
 
@@ -120,7 +117,6 @@ class ShadowsocksUriParser {
     String host;
     String portStr;
     if (hostPort.startsWith('[')) {
-      // IPv6 literal: [::1]:8388
       final close = hostPort.indexOf(']');
       if (close < 0 ||
           close + 1 >= hostPort.length ||

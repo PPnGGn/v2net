@@ -237,13 +237,11 @@ void main() {
                   'outboundTag': 'direct',
                   'ip': ['geoip:cn', '10.0.0.0/8'],
                 },
-                // Only a geosite entry -> rule becomes empty and is dropped.
                 {
                   'type': 'field',
                   'outboundTag': 'block',
                   'domain': ['geosite:category-ads'],
                 },
-                // No domain/ip at all -> untouched.
                 {
                   'type': 'field',
                   'outboundTag': 'direct',

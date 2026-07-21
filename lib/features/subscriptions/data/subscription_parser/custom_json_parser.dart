@@ -21,8 +21,6 @@ class CustomJsonParser {
         final title = config['remarks'] as String? ?? 'Unknown Server';
         final outbounds = config['outbounds'] as List<dynamic>;
 
-        // The rest of the outbounds are just freedom/block/dns, we only care
-        // about the one actually pointing at a real server.
         final proxyOutbound = outbounds
             .cast<Map<String, dynamic>>()
             .firstWhereOrNull((o) {
@@ -50,7 +48,6 @@ class CustomJsonParser {
           ),
         );
       } catch (e) {
-        // skip this entry and keep going, no point failing the whole batch
         _talker.warning('Parser: skipped a broken JSON entry -> $e');
       }
     }
@@ -62,8 +59,6 @@ class CustomJsonParser {
     if (settings.containsKey('vnext')) {
       final vnext = settings['vnext'] as List<dynamic>;
       if (vnext.isEmpty) return null;
-      // vnext can technically hold multiple servers, but in practice these
-      // configs only ever have one, so we just take the first
       final node = vnext[0] as Map<String, dynamic>;
       final port = _parsePort(node['port']);
       if (port == null) return null;
@@ -95,15 +90,8 @@ class CustomJsonParser {
   }
 
   static const _geoPrefixByField = {'domain': 'geosite:', 'ip': 'geoip:'};
-  // Structural rule keys — anything else left on a rule is a real matcher.
   static const _ruleMetaKeys = {'type', 'outboundTag', 'balancerTag'};
 
-  // Xray needs geosite.dat/geoip.dat to resolve "geosite:"/"geoip:" entries;
-  // we don't bundle those files, so any routing rule using them fails the
-  // whole config build. Strip them instead of failing the connection.
-  //
-  // A rule with nothing left to match on would otherwise match *all*
-  // traffic, so such rules are dropped entirely rather than left empty.
   Map<String, dynamic> _stripUnsupportedRouting(Map<String, dynamic> config) {
     final routing = config['routing'];
     if (routing is! Map<String, dynamic> || routing['rules'] is! List) {

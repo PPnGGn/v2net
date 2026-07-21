@@ -12,8 +12,7 @@ class VlessUriParser {
 
   bool isVless(String s) => s.trim().toLowerCase().startsWith('vless://');
 
-  // Subscriptions are plain text, one link per line, so we just split on
-  // newlines and skip anything that isn't a vless link.
+  // plain text, one link per line
   List<VpnServer> parseLines(String text, String sourceId) {
     final lines = text
         .split(RegExp(r'\r?\n'))
@@ -37,7 +36,6 @@ class VlessUriParser {
         final sni = query['sni'] ?? '';
         final pbk = query['pbk'] ?? '';
         final sid = query['sid'] ?? '';
-        // most panels default to chrome when fp isn't set, so we do the same
         final fp = query['fp'] ?? 'chrome';
         final flow = query['flow'] ?? '';
 

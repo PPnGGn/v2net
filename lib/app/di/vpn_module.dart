@@ -1,6 +1,6 @@
 import 'package:injectable/injectable.dart';
 import 'package:v2net/features/vpn/data/vpn_api.g.dart';
-import 'package:v2net/features/vpn/data/vpn_status_receiver.dart';
+import 'package:v2net/features/vpn/data/vpn_event_receiver.dart';
 
 @module
 abstract class VpnModule {
@@ -8,5 +8,6 @@ abstract class VpnModule {
   VpnConnection get vpnConnection => VpnConnection();
 
   @lazySingleton
-  VpnStatusReceiver get vpnStatusReceiver => VpnStatusReceiver()..register();
+  NativeVpnEventReceiver get vpnEventReceiver =>
+      NativeVpnEventReceiver()..register();
 }
