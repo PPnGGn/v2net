@@ -21,11 +21,14 @@ class CustomJsonParser {
         final title = config['remarks'] as String? ?? 'Unknown Server';
         final outbounds = config['outbounds'] as List<dynamic>;
 
-        // Only the "proxy" (or "proxy-*") outbound carries the actual server.
-        final proxyOutbound = outbounds.cast<Map<String, dynamic>>().firstWhereOrNull((o) {
-          final tag = o['tag'] as String? ?? '';
-          return tag == 'proxy' || tag.startsWith('proxy-');
-        });
+        // The rest of the outbounds are just freedom/block/dns, we only care
+        // about the one actually pointing at a real server.
+        final proxyOutbound = outbounds
+            .cast<Map<String, dynamic>>()
+            .firstWhereOrNull((o) {
+              final tag = o['tag'] as String? ?? '';
+              return tag == 'proxy' || tag.startsWith('proxy-');
+            });
 
         if (proxyOutbound == null) continue;
 
@@ -37,15 +40,18 @@ class CustomJsonParser {
         final port = addressPort.$2;
         final uuid = addressPort.$3;
 
-        result.add(VpnServer(
-          id: uuid.isNotEmpty ? '$address:$port:$uuid' : '$address:$port',
-          subscriptionId: sourceId,
-          title: title,
-          countryCode: _countryCodeExtractor.extract(title),
-          rawCode: jsonEncode(config),
-        ));
+        result.add(
+          VpnServer(
+            id: uuid.isNotEmpty ? '$address:$port:$uuid' : '$address:$port',
+            subscriptionId: sourceId,
+            title: title,
+            countryCode: _countryCodeExtractor.extract(title),
+            configJson: jsonEncode(config),
+          ),
+        );
       } catch (e) {
-        _talker.warning('Parser: пропущен битый JSON объект -> $e');
+        // skip this entry and keep going, no point failing the whole batch
+        _talker.warning('Parser: skipped a broken JSON entry -> $e');
       }
     }
     return result;
@@ -56,6 +62,8 @@ class CustomJsonParser {
     if (settings.containsKey('vnext')) {
       final vnext = settings['vnext'] as List<dynamic>;
       if (vnext.isEmpty) return null;
+      // vnext can technically hold multiple servers, but in practice these
+      // configs only ever have one, so we just take the first
       final node = vnext[0] as Map<String, dynamic>;
       final port = _parsePort(node['port']);
       if (port == null) return null;
@@ -79,7 +87,9 @@ class CustomJsonParser {
 
   // Parses a port from either an int or a numeric string, validating its range.
   int? _parsePort(dynamic value) {
-    final port = value is int ? value : (value is String ? int.tryParse(value) : null);
+    final port = value is int
+        ? value
+        : (value is String ? int.tryParse(value) : null);
     if (port == null || port <= 0 || port > 65535) return null;
     return port;
   }

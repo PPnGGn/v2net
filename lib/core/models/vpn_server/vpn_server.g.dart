@@ -11,7 +11,7 @@ _VpnServer _$VpnServerFromJson(Map<String, dynamic> json) => _VpnServer(
   subscriptionId: json['subscriptionId'] as String,
   countryCode: json['countryCode'] as String,
   title: json['title'] as String,
-  rawCode: json['rawCode'] as String,
+  configJson: json['configJson'] as String,
 );
 
 Map<String, dynamic> _$VpnServerToJson(_VpnServer instance) =>
@@ -20,5 +20,5 @@ Map<String, dynamic> _$VpnServerToJson(_VpnServer instance) =>
       'subscriptionId': instance.subscriptionId,
       'countryCode': instance.countryCode,
       'title': instance.title,
-      'rawCode': instance.rawCode,
+      'configJson': instance.configJson,
     };

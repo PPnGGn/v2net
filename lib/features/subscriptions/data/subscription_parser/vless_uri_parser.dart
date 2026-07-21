@@ -10,12 +10,14 @@ class VlessUriParser {
 
   VlessUriParser(this._talker, this._configBuilder, this._countryCodeExtractor);
 
-  // Case-insensitive check for a vless:// link.
   bool isVless(String s) => s.trim().toLowerCase().startsWith('vless://');
 
-  // Parses a block of text into VLESS Reality servers, one per line.
+  // Subscriptions are plain text, one link per line, so we just split on
+  // newlines and skip anything that isn't a vless link.
   List<VpnServer> parseLines(String text, String sourceId) {
-    final lines = text.split(RegExp(r'\r?\n')).where((l) => l.trim().isNotEmpty);
+    final lines = text
+        .split(RegExp(r'\r?\n'))
+        .where((l) => l.trim().isNotEmpty);
     final List<VpnServer> result = [];
 
     for (final line in lines) {
@@ -27,31 +29,47 @@ class VlessUriParser {
         final address = uri.host;
         final port = uri.port;
 
-        if (uuid.isEmpty || address.isEmpty || port <= 0 || port > 65535) continue;
+        if (uuid.isEmpty || address.isEmpty || port <= 0 || port > 65535)
+          continue;
 
         final query = uri.queryParameters;
         final sni = query['sni'] ?? '';
         final pbk = query['pbk'] ?? '';
         final sid = query['sid'] ?? '';
+        // most panels default to chrome when fp isn't set, so we do the same
         final fp = query['fp'] ?? 'chrome';
         final flow = query['flow'] ?? '';
 
+        // fragment holds the human-readable remark, usually a flag + country name
         final rawRemarks = uri.fragment;
-        final title = rawRemarks.isNotEmpty ? Uri.decodeComponent(rawRemarks) : '$address:$port';
+        final title = rawRemarks.isNotEmpty
+            ? Uri.decodeComponent(rawRemarks)
+            : '$address:$port';
 
-        final rawCodeJson = _configBuilder.buildVlessReality(
-          uuid: uuid, address: address, port: port, sni: sni, pbk: pbk, sid: sid, fp: fp, flow: flow, title: title,
+        final configJson = _configBuilder.buildVlessReality(
+          uuid: uuid,
+          address: address,
+          port: port,
+          sni: sni,
+          pbk: pbk,
+          sid: sid,
+          fp: fp,
+          flow: flow,
+          title: title,
         );
 
-        result.add(VpnServer(
-          id: '$address:$port:$uuid',
-          subscriptionId: sourceId,
-          title: title,
-          countryCode: _countryCodeExtractor.extract(title),
-          rawCode: rawCodeJson,
-        ));
+        result.add(
+          VpnServer(
+            id: '$address:$port:$uuid',
+            subscriptionId: sourceId,
+            title: title,
+            countryCode: _countryCodeExtractor.extract(title),
+            configJson: configJson,
+          ),
+        );
       } catch (e) {
-        _talker.warning('Parser: пропущена битая ссылка -> $e');
+        // one bad link shouldn't break the whole subscription
+        _talker.warning('Parser: skipped a broken link -> $e');
       }
     }
     return result;

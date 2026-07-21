@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$VpnServer {
 
- String get id; String get subscriptionId; String get countryCode; String get title; String get rawCode;
+ String get id; String get subscriptionId; String get countryCode; String get title; String get configJson;
 /// Create a copy of VpnServer
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $VpnServerCopyWith<VpnServer> get copyWith => _$VpnServerCopyWithImpl<VpnServer>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VpnServer&&(identical(other.id, id) || other.id == id)&&(identical(other.subscriptionId, subscriptionId) || other.subscriptionId == subscriptionId)&&(identical(other.countryCode, countryCode) || other.countryCode == countryCode)&&(identical(other.title, title) || other.title == title)&&(identical(other.rawCode, rawCode) || other.rawCode == rawCode));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VpnServer&&(identical(other.id, id) || other.id == id)&&(identical(other.subscriptionId, subscriptionId) || other.subscriptionId == subscriptionId)&&(identical(other.countryCode, countryCode) || other.countryCode == countryCode)&&(identical(other.title, title) || other.title == title)&&(identical(other.configJson, configJson) || other.configJson == configJson));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,subscriptionId,countryCode,title,rawCode);
+int get hashCode => Object.hash(runtimeType,id,subscriptionId,countryCode,title,configJson);
 
 @override
 String toString() {
-  return 'VpnServer(id: $id, subscriptionId: $subscriptionId, countryCode: $countryCode, title: $title, rawCode: $rawCode)';
+  return 'VpnServer(id: $id, subscriptionId: $subscriptionId, countryCode: $countryCode, title: $title, configJson: $configJson)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $VpnServerCopyWith<$Res>  {
   factory $VpnServerCopyWith(VpnServer value, $Res Function(VpnServer) _then) = _$VpnServerCopyWithImpl;
 @useResult
 $Res call({
- String id, String subscriptionId, String countryCode, String title, String rawCode
+ String id, String subscriptionId, String countryCode, String title, String configJson
 });
 
 
@@ -65,13 +65,13 @@ class _$VpnServerCopyWithImpl<$Res>
 
 /// Create a copy of VpnServer
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? subscriptionId = null,Object? countryCode = null,Object? title = null,Object? rawCode = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? subscriptionId = null,Object? countryCode = null,Object? title = null,Object? configJson = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,subscriptionId: null == subscriptionId ? _self.subscriptionId : subscriptionId // ignore: cast_nullable_to_non_nullable
 as String,countryCode: null == countryCode ? _self.countryCode : countryCode // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
-as String,rawCode: null == rawCode ? _self.rawCode : rawCode // ignore: cast_nullable_to_non_nullable
+as String,configJson: null == configJson ? _self.configJson : configJson // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }
@@ -157,10 +157,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String subscriptionId,  String countryCode,  String title,  String rawCode)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String subscriptionId,  String countryCode,  String title,  String configJson)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _VpnServer() when $default != null:
-return $default(_that.id,_that.subscriptionId,_that.countryCode,_that.title,_that.rawCode);case _:
+return $default(_that.id,_that.subscriptionId,_that.countryCode,_that.title,_that.configJson);case _:
   return orElse();
 
 }
@@ -178,10 +178,10 @@ return $default(_that.id,_that.subscriptionId,_that.countryCode,_that.title,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String subscriptionId,  String countryCode,  String title,  String rawCode)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String subscriptionId,  String countryCode,  String title,  String configJson)  $default,) {final _that = this;
 switch (_that) {
 case _VpnServer():
-return $default(_that.id,_that.subscriptionId,_that.countryCode,_that.title,_that.rawCode);case _:
+return $default(_that.id,_that.subscriptionId,_that.countryCode,_that.title,_that.configJson);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -198,10 +198,10 @@ return $default(_that.id,_that.subscriptionId,_that.countryCode,_that.title,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String subscriptionId,  String countryCode,  String title,  String rawCode)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String subscriptionId,  String countryCode,  String title,  String configJson)?  $default,) {final _that = this;
 switch (_that) {
 case _VpnServer() when $default != null:
-return $default(_that.id,_that.subscriptionId,_that.countryCode,_that.title,_that.rawCode);case _:
+return $default(_that.id,_that.subscriptionId,_that.countryCode,_that.title,_that.configJson);case _:
   return null;
 
 }
@@ -213,14 +213,14 @@ return $default(_that.id,_that.subscriptionId,_that.countryCode,_that.title,_tha
 @JsonSerializable()
 
 class _VpnServer implements VpnServer {
-  const _VpnServer({required this.id, required this.subscriptionId, required this.countryCode, required this.title, required this.rawCode});
+  const _VpnServer({required this.id, required this.subscriptionId, required this.countryCode, required this.title, required this.configJson});
   factory _VpnServer.fromJson(Map<String, dynamic> json) => _$VpnServerFromJson(json);
 
 @override final  String id;
 @override final  String subscriptionId;
 @override final  String countryCode;
 @override final  String title;
-@override final  String rawCode;
+@override final  String configJson;
 
 /// Create a copy of VpnServer
 /// with the given fields replaced by the non-null parameter values.
@@ -235,16 +235,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VpnServer&&(identical(other.id, id) || other.id == id)&&(identical(other.subscriptionId, subscriptionId) || other.subscriptionId == subscriptionId)&&(identical(other.countryCode, countryCode) || other.countryCode == countryCode)&&(identical(other.title, title) || other.title == title)&&(identical(other.rawCode, rawCode) || other.rawCode == rawCode));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VpnServer&&(identical(other.id, id) || other.id == id)&&(identical(other.subscriptionId, subscriptionId) || other.subscriptionId == subscriptionId)&&(identical(other.countryCode, countryCode) || other.countryCode == countryCode)&&(identical(other.title, title) || other.title == title)&&(identical(other.configJson, configJson) || other.configJson == configJson));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,subscriptionId,countryCode,title,rawCode);
+int get hashCode => Object.hash(runtimeType,id,subscriptionId,countryCode,title,configJson);
 
 @override
 String toString() {
-  return 'VpnServer(id: $id, subscriptionId: $subscriptionId, countryCode: $countryCode, title: $title, rawCode: $rawCode)';
+  return 'VpnServer(id: $id, subscriptionId: $subscriptionId, countryCode: $countryCode, title: $title, configJson: $configJson)';
 }
 
 
@@ -255,7 +255,7 @@ abstract mixin class _$VpnServerCopyWith<$Res> implements $VpnServerCopyWith<$Re
   factory _$VpnServerCopyWith(_VpnServer value, $Res Function(_VpnServer) _then) = __$VpnServerCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String subscriptionId, String countryCode, String title, String rawCode
+ String id, String subscriptionId, String countryCode, String title, String configJson
 });
 
 
@@ -272,13 +272,13 @@ class __$VpnServerCopyWithImpl<$Res>
 
 /// Create a copy of VpnServer
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? subscriptionId = null,Object? countryCode = null,Object? title = null,Object? rawCode = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? subscriptionId = null,Object? countryCode = null,Object? title = null,Object? configJson = null,}) {
   return _then(_VpnServer(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,subscriptionId: null == subscriptionId ? _self.subscriptionId : subscriptionId // ignore: cast_nullable_to_non_nullable
 as String,countryCode: null == countryCode ? _self.countryCode : countryCode // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
-as String,rawCode: null == rawCode ? _self.rawCode : rawCode // ignore: cast_nullable_to_non_nullable
+as String,configJson: null == configJson ? _self.configJson : configJson // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }

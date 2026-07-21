@@ -25,7 +25,7 @@ void main() {
           subscriptionId: id,
           countryCode: 'NL',
           title: 'Amsterdam',
-          rawCode: 'vless://uuid@host:443',
+          configJson: 'vless://uuid@host:443',
         ),
       ],
     );

@@ -61,7 +61,7 @@ void main() {
       expect(server.subscriptionId, equals('my-subscription'));
       expect(server.title, equals('🇳🇱 Netherlands #1'));
       expect(server.countryCode, equals('NL'));
-      expect(server.rawCode, contains('"publicKey":"publicKey123"'));
+      expect(server.configJson, contains('"publicKey":"publicKey123"'));
     });
 
     test('falls back to "address:port" as title when there is no fragment', () {
@@ -79,7 +79,7 @@ void main() {
 
       final servers = parser.parseLines(link, 'my-subscription');
 
-      expect(servers.single.rawCode, contains('"fingerprint":"chrome"'));
+      expect(servers.single.configJson, contains('"fingerprint":"chrome"'));
     });
 
     test('skips a broken line but keeps the valid ones around it', () {
@@ -107,10 +107,7 @@ void main() {
       final tooHigh =
           'vless://11111111-1111-1111-1111-111111111111@example.com:70000';
 
-      final servers = parser.parseLines(
-        '$tooLow\n$tooHigh',
-        'my-subscription',
-      );
+      final servers = parser.parseLines('$tooLow\n$tooHigh', 'my-subscription');
 
       expect(servers, isEmpty);
     });
