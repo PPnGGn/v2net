@@ -15,26 +15,34 @@ import 'package:talker_flutter/talker_flutter.dart' as _i207;
 
 import '../../features/subscriptions/data/subscription_parser/subscription_parser_service.dart'
     as _i302;
+import '../../features/subscriptions/data/subscription_storage/subscription_storage.dart'
+    as _i505;
 import '../../features/vpn/cubit/vpn_cubit.dart' as _i364;
 import '../../features/vpn/data/vpn_api.g.dart' as _i482;
 import '../../features/vpn/data/vpn_repository.dart' as _i1056;
 import '../../features/vpn/data/vpn_status_receiver.dart' as _i915;
 import 'logger_module.dart' as _i987;
+import 'storage_module.dart' as _i371;
 import 'vpn_module.dart' as _i731;
 
 extension GetItInjectableX on _i174.GetIt {
   // initializes the registration of main-scope dependencies inside of GetIt
-  _i174.GetIt init({
+  Future<_i174.GetIt> init({
     String? environment,
     _i526.EnvironmentFilter? environmentFilter,
-  }) {
+  }) async {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     final loggerModule = _$LoggerModule();
     final vpnModule = _$VpnModule();
+    final storageModule = _$StorageModule();
     gh.lazySingleton<_i207.Talker>(() => loggerModule.talker);
     gh.lazySingleton<_i482.VpnConnection>(() => vpnModule.vpnConnection);
     gh.lazySingleton<_i915.VpnStatusReceiver>(
       () => vpnModule.vpnStatusReceiver,
+    );
+    await gh.singletonAsync<_i505.SubscriptionStorage>(
+      () => storageModule.subscriptionStorage(gh<_i207.Talker>()),
+      preResolve: true,
     );
     gh.lazySingleton<_i302.SubscriptionParserService>(
       () => _i302.SubscriptionParserService(gh<_i207.Talker>()),
@@ -59,3 +67,5 @@ extension GetItInjectableX on _i174.GetIt {
 class _$LoggerModule extends _i987.LoggerModule {}
 
 class _$VpnModule extends _i731.VpnModule {}
+
+class _$StorageModule extends _i371.StorageModule {}

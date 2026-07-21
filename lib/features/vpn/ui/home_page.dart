@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:v2net/app/di/injector.dart';
-import 'package:v2net/core/models/vpn_server.dart';
+import 'package:v2net/core/models/vpn_server/vpn_server.dart';
 import 'package:v2net/features/vpn/cubit/vpn_cubit.dart';
 
 class HomePage extends StatelessWidget {

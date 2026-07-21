@@ -4,7 +4,7 @@ import 'package:bloc/bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:talker_flutter/talker_flutter.dart';
-import 'package:v2net/core/models/vpn_server.dart';
+import 'package:v2net/core/models/vpn_server/vpn_server.dart';
 import 'package:v2net/core/result.dart';
 import 'package:v2net/features/vpn/data/vpn_repository.dart';
 
