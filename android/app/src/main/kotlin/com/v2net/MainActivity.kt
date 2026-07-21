@@ -14,7 +14,7 @@ class MainActivity : FlutterActivity(), VpnConnection {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         VpnConnection.setUp(flutterEngine.dartExecutor.binaryMessenger, this)
-        VpnEventBridge.receiver = ConnectionReceiver(flutterEngine.dartExecutor.binaryMessenger)
+        VpnEventBridge.receiver = VpnEventReceiver(flutterEngine.dartExecutor.binaryMessenger)
     }
 
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
@@ -22,9 +22,12 @@ class MainActivity : FlutterActivity(), VpnConnection {
         super.cleanUpFlutterEngine(flutterEngine)
     }
 
-    override fun start(configJson: String, callback: (Result<VpnResult>) -> Unit) {
+    override fun getStatus(): VpnStatusMessage = VpnEventBridge.currentStatus()
+
+    override fun start(config: VpnConfigMessage, callback: (Result<VpnResult>) -> Unit) {
         Log.d("VPN_BRIDGE", "Requesting VPN start with dynamic config...")
 
+        val configJson = config.configJson
         val intent = VpnService.prepare(this)
 
         if (intent != null) {
@@ -66,7 +69,7 @@ class MainActivity : FlutterActivity(), VpnConnection {
                     pendingVpnCallback?.invoke(Result.success(VpnResult(successful = true)))
                 } else {
                     Log.e("VPN_BRIDGE", "Error: pendingConfig is null")
-                    pendingVpnCallback?.invoke(Result.success(VpnResult(successful = false, hasError = true, error = "Config lost")))
+                    pendingVpnCallback?.invoke(Result.success(VpnResult(successful = false, error = "Config lost")))
                 }
             } else {
                 Log.d("VPN_BRIDGE", "Permission denied by user")

@@ -30,6 +30,7 @@ class V2RayVpnService : VpnService() {
 
         Log.d("VPN_SERVICE", "Starting service and core...")
         isStopping = false
+        VpnEventBridge.notifyStatus(VpnStatus.CONNECTING)
         setupVpn(configJson)
 
         return START_STICKY
@@ -54,11 +55,12 @@ class V2RayVpnService : VpnService() {
             V2netcore.startTun(fd.toLong(), 10808L)
             Log.d("VPN_SERVICE", "Tun2Socks linked to fd: $fd on port 10808.")
 
-            VpnEventBridge.notifyStatus(true)
+            VpnEventBridge.notifyStatus(VpnStatus.CONNECTED)
 
         } catch (e: Exception) {
             Log.e("VPN_SERVICE", "Critical error in setupVpn: ${e.message}")
-            stopVpn()
+            VpnEventBridge.notifyStatus(VpnStatus.ERROR, e.message ?: "setupVpn failed")
+            stopVpn(dueToError = true)
         }
     }
 
@@ -69,11 +71,14 @@ class V2RayVpnService : VpnService() {
         super.onRevoke()
     }
 
-    private fun stopVpn() {
+    // dueToError: keep the ERROR status the caller already pushed instead of
+    // overwriting it with a normal disconnect sequence.
+    private fun stopVpn(dueToError: Boolean = false) {
         if (isStopping) return
         isStopping = true
 
         Log.d("VPN_SERVICE", "Shutting down everything...")
+        if (!dueToError) VpnEventBridge.notifyStatus(VpnStatus.DISCONNECTING)
 
         try {
             // core closes the TUN fd on the native side
@@ -84,8 +89,8 @@ class V2RayVpnService : VpnService() {
 
         localTunnel = null
 
-        // single call site: covers explicit stop, onRevoke, onDestroy, setupVpn failure
-        VpnEventBridge.notifyStatus(false)
+        // covers explicit stop, onRevoke, onDestroy (setupVpn failure keeps ERROR)
+        if (!dueToError) VpnEventBridge.notifyStatus(VpnStatus.DISCONNECTED)
 
         stopSelf()
     }

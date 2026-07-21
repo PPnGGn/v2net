@@ -205,20 +205,48 @@ class FlutterError (
   val details: Any? = null
 ) : RuntimeException()
 
-/** Generated class from Pigeon that represents data sent in messages. */
-data class VpnMessage (
-  val connected: Boolean? = null
+/**
+ * Lifecycle of the VPN tunnel. The native side is the source of truth and
+ * pushes every transition through [VpnEventReceiver.onStatusChanged].
+ */
+enum class VpnStatus(val raw: Int) {
+  DISCONNECTED(0),
+  CONNECTING(1),
+  CONNECTED(2),
+  DISCONNECTING(3),
+  ERROR(4);
+
+  companion object {
+    fun ofRaw(raw: Int): VpnStatus? {
+      return values().firstOrNull { it.raw == raw }
+    }
+  }
+}
+
+/**
+ * Everything the native side needs to bring up a tunnel for one server.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class VpnConfigMessage (
+  val configJson: String,
+  val serverId: String? = null,
+  val title: String? = null
 )
  {
   companion object {
-    fun fromList(pigeonVar_list: List<Any?>): VpnMessage {
-      val connected = pigeonVar_list[0] as Boolean?
-      return VpnMessage(connected)
+    fun fromList(pigeonVar_list: List<Any?>): VpnConfigMessage {
+      val configJson = pigeonVar_list[0] as String
+      val serverId = pigeonVar_list[1] as String?
+      val title = pigeonVar_list[2] as String?
+      return VpnConfigMessage(configJson, serverId, title)
     }
   }
   fun toList(): List<Any?> {
     return listOf(
-      connected,
+      configJson,
+      serverId,
+      title,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -228,36 +256,173 @@ data class VpnMessage (
     if (this === other) {
       return true
     }
-    val other = other as VpnMessage
-    return VpnApiPigeonUtils.deepEquals(this.connected, other.connected)
+    val other = other as VpnConfigMessage
+    return VpnApiPigeonUtils.deepEquals(this.configJson, other.configJson) && VpnApiPigeonUtils.deepEquals(this.serverId, other.serverId) && VpnApiPigeonUtils.deepEquals(this.title, other.title)
   }
 
   override fun hashCode(): Int {
     var result = javaClass.hashCode()
-    result = 31 * result + VpnApiPigeonUtils.deepHash(this.connected)
+    result = 31 * result + VpnApiPigeonUtils.deepHash(this.configJson)
+    result = 31 * result + VpnApiPigeonUtils.deepHash(this.serverId)
+    result = 31 * result + VpnApiPigeonUtils.deepHash(this.title)
     return result
   }
 }
 
-/** Generated class from Pigeon that represents data sent in messages. */
+/**
+ * A status transition. [error] is only meaningful for [VpnStatus.error].
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class VpnStatusMessage (
+  val status: VpnStatus,
+  val error: String? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): VpnStatusMessage {
+      val status = pigeonVar_list[0] as VpnStatus
+      val error = pigeonVar_list[1] as String?
+      return VpnStatusMessage(status, error)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      status,
+      error,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as VpnStatusMessage
+    return VpnApiPigeonUtils.deepEquals(this.status, other.status) && VpnApiPigeonUtils.deepEquals(this.error, other.error)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + VpnApiPigeonUtils.deepHash(this.status)
+    result = 31 * result + VpnApiPigeonUtils.deepHash(this.error)
+    return result
+  }
+}
+
+/**
+ * A single log line emitted by the core (xray / tun2socks).
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class VpnLogMessage (
+  val level: String,
+  val message: String,
+  val source: String,
+  val timestampMs: Long
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): VpnLogMessage {
+      val level = pigeonVar_list[0] as String
+      val message = pigeonVar_list[1] as String
+      val source = pigeonVar_list[2] as String
+      val timestampMs = pigeonVar_list[3] as Long
+      return VpnLogMessage(level, message, source, timestampMs)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      level,
+      message,
+      source,
+      timestampMs,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as VpnLogMessage
+    return VpnApiPigeonUtils.deepEquals(this.level, other.level) && VpnApiPigeonUtils.deepEquals(this.message, other.message) && VpnApiPigeonUtils.deepEquals(this.source, other.source) && VpnApiPigeonUtils.deepEquals(this.timestampMs, other.timestampMs)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + VpnApiPigeonUtils.deepHash(this.level)
+    result = 31 * result + VpnApiPigeonUtils.deepHash(this.message)
+    result = 31 * result + VpnApiPigeonUtils.deepHash(this.source)
+    result = 31 * result + VpnApiPigeonUtils.deepHash(this.timestampMs)
+    return result
+  }
+}
+
+/**
+ * Cumulative traffic counters since the tunnel came up.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class VpnTrafficMessage (
+  val uplinkBytes: Long,
+  val downlinkBytes: Long
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): VpnTrafficMessage {
+      val uplinkBytes = pigeonVar_list[0] as Long
+      val downlinkBytes = pigeonVar_list[1] as Long
+      return VpnTrafficMessage(uplinkBytes, downlinkBytes)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      uplinkBytes,
+      downlinkBytes,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as VpnTrafficMessage
+    return VpnApiPigeonUtils.deepEquals(this.uplinkBytes, other.uplinkBytes) && VpnApiPigeonUtils.deepEquals(this.downlinkBytes, other.downlinkBytes)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + VpnApiPigeonUtils.deepHash(this.uplinkBytes)
+    result = 31 * result + VpnApiPigeonUtils.deepHash(this.downlinkBytes)
+    return result
+  }
+}
+
+/**
+ * Result of a start/stop request.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
 data class VpnResult (
-  val successful: Boolean? = null,
-  val hasError: Boolean? = null,
+  val successful: Boolean,
   val error: String? = null
 )
  {
   companion object {
     fun fromList(pigeonVar_list: List<Any?>): VpnResult {
-      val successful = pigeonVar_list[0] as Boolean?
-      val hasError = pigeonVar_list[1] as Boolean?
-      val error = pigeonVar_list[2] as String?
-      return VpnResult(successful, hasError, error)
+      val successful = pigeonVar_list[0] as Boolean
+      val error = pigeonVar_list[1] as String?
+      return VpnResult(successful, error)
     }
   }
   fun toList(): List<Any?> {
     return listOf(
       successful,
-      hasError,
       error,
     )
   }
@@ -269,13 +434,12 @@ data class VpnResult (
       return true
     }
     val other = other as VpnResult
-    return VpnApiPigeonUtils.deepEquals(this.successful, other.successful) && VpnApiPigeonUtils.deepEquals(this.hasError, other.hasError) && VpnApiPigeonUtils.deepEquals(this.error, other.error)
+    return VpnApiPigeonUtils.deepEquals(this.successful, other.successful) && VpnApiPigeonUtils.deepEquals(this.error, other.error)
   }
 
   override fun hashCode(): Int {
     var result = javaClass.hashCode()
     result = 31 * result + VpnApiPigeonUtils.deepHash(this.successful)
-    result = 31 * result + VpnApiPigeonUtils.deepHash(this.hasError)
     result = 31 * result + VpnApiPigeonUtils.deepHash(this.error)
     return result
   }
@@ -284,11 +448,31 @@ private open class VpnApiPigeonCodec : StandardMessageCodec() {
   override fun readValueOfType(type: Byte, buffer: ByteBuffer): Any? {
     return when (type) {
       129.toByte() -> {
-        return (readValue(buffer) as? List<Any?>)?.let {
-          VpnMessage.fromList(it)
+        return (readValue(buffer) as Long?)?.let {
+          VpnStatus.ofRaw(it.toInt())
         }
       }
       130.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          VpnConfigMessage.fromList(it)
+        }
+      }
+      131.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          VpnStatusMessage.fromList(it)
+        }
+      }
+      132.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          VpnLogMessage.fromList(it)
+        }
+      }
+      133.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          VpnTrafficMessage.fromList(it)
+        }
+      }
+      134.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
           VpnResult.fromList(it)
         }
@@ -298,12 +482,28 @@ private open class VpnApiPigeonCodec : StandardMessageCodec() {
   }
   override fun writeValue(stream: ByteArrayOutputStream, value: Any?)   {
     when (value) {
-      is VpnMessage -> {
+      is VpnStatus -> {
         stream.write(129)
+        writeValue(stream, value.raw.toLong())
+      }
+      is VpnConfigMessage -> {
+        stream.write(130)
+        writeValue(stream, value.toList())
+      }
+      is VpnStatusMessage -> {
+        stream.write(131)
+        writeValue(stream, value.toList())
+      }
+      is VpnLogMessage -> {
+        stream.write(132)
+        writeValue(stream, value.toList())
+      }
+      is VpnTrafficMessage -> {
+        stream.write(133)
         writeValue(stream, value.toList())
       }
       is VpnResult -> {
-        stream.write(130)
+        stream.write(134)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)
@@ -318,8 +518,10 @@ private open class VpnApiPigeonCodec : StandardMessageCodec() {
  * Generated interface from Pigeon that represents a handler of messages from Flutter.
  */
 interface VpnConnection {
-  fun start(configJson: String, callback: (Result<VpnResult>) -> Unit)
+  fun start(config: VpnConfigMessage, callback: (Result<VpnResult>) -> Unit)
   fun stop(callback: (Result<VpnResult>) -> Unit)
+  /** Source of truth queried on resume to re-sync the UI. */
+  fun getStatus(): VpnStatusMessage
 
   companion object {
     /** The codec used by VpnConnection. */
@@ -335,8 +537,8 @@ interface VpnConnection {
         if (api != null) {
           channel.setMessageHandler { message, reply ->
             val args = message as List<Any?>
-            val configJsonArg = args[0] as String
-            api.start(configJsonArg) { result: Result<VpnResult> ->
+            val configArg = args[0] as VpnConfigMessage
+            api.start(configArg) { result: Result<VpnResult> ->
               val error = result.exceptionOrNull()
               if (error != null) {
                 reply.reply(VpnApiPigeonUtils.wrapError(error))
@@ -368,6 +570,21 @@ interface VpnConnection {
           channel.setMessageHandler(null)
         }
       }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.v2net.VpnConnection.getStatus$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            val wrapped: List<Any?> = try {
+              listOf(api.getStatus())
+            } catch (exception: Throwable) {
+              VpnApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
     }
   }
 }
@@ -376,17 +593,51 @@ interface VpnConnection {
  *
  * Generated class from Pigeon that represents Flutter messages that can be called from Kotlin.
  */
-class ConnectionReceiver(private val binaryMessenger: BinaryMessenger, private val messageChannelSuffix: String = "") {
+class VpnEventReceiver(private val binaryMessenger: BinaryMessenger, private val messageChannelSuffix: String = "") {
   companion object {
-    /** The codec used by ConnectionReceiver. */
+    /** The codec used by VpnEventReceiver. */
     val codec: MessageCodec<Any?> by lazy {
       VpnApiPigeonCodec()
     }
   }
-  fun onStatusChanged(messageArg: VpnMessage, callback: (Result<Unit>) -> Unit)
+  fun onStatusChanged(messageArg: VpnStatusMessage, callback: (Result<Unit>) -> Unit)
 {
     val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
-    val channelName = "dev.flutter.pigeon.v2net.ConnectionReceiver.onStatusChanged$separatedMessageChannelSuffix"
+    val channelName = "dev.flutter.pigeon.v2net.VpnEventReceiver.onStatusChanged$separatedMessageChannelSuffix"
+    val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
+    channel.send(listOf(messageArg)) {
+      if (it is List<*>) {
+        if (it.size > 1) {
+          callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))
+        } else {
+          callback(Result.success(Unit))
+        }
+      } else {
+        callback(Result.failure(VpnApiPigeonUtils.createConnectionError(channelName)))
+      } 
+    }
+  }
+  fun onLog(messageArg: VpnLogMessage, callback: (Result<Unit>) -> Unit)
+{
+    val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
+    val channelName = "dev.flutter.pigeon.v2net.VpnEventReceiver.onLog$separatedMessageChannelSuffix"
+    val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
+    channel.send(listOf(messageArg)) {
+      if (it is List<*>) {
+        if (it.size > 1) {
+          callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))
+        } else {
+          callback(Result.success(Unit))
+        }
+      } else {
+        callback(Result.failure(VpnApiPigeonUtils.createConnectionError(channelName)))
+      } 
+    }
+  }
+  fun onTraffic(messageArg: VpnTrafficMessage, callback: (Result<Unit>) -> Unit)
+{
+    val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
+    val channelName = "dev.flutter.pigeon.v2net.VpnEventReceiver.onTraffic$separatedMessageChannelSuffix"
     val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
     channel.send(listOf(messageArg)) {
       if (it is List<*>) {
