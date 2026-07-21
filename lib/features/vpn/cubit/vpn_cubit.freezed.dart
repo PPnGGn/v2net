@@ -55,13 +55,14 @@ extension VpnStatePatterns on VpnState {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( _Connecting value)?  connecting,TResult Function( _Connected value)?  connected,TResult Function( _Disconnected value)?  disconnected,TResult Function( _Error value)?  error,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( _Disconnected value)?  disconnected,TResult Function( _Connecting value)?  connecting,TResult Function( _Connected value)?  connected,TResult Function( _Disconnecting value)?  disconnecting,TResult Function( _Error value)?  error,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
-case _Connecting() when connecting != null:
+case _Disconnected() when disconnected != null:
+return disconnected(_that);case _Connecting() when connecting != null:
 return connecting(_that);case _Connected() when connected != null:
-return connected(_that);case _Disconnected() when disconnected != null:
-return disconnected(_that);case _Error() when error != null:
+return connected(_that);case _Disconnecting() when disconnecting != null:
+return disconnecting(_that);case _Error() when error != null:
 return error(_that);case _:
   return orElse();
 
@@ -80,13 +81,14 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( _Connecting value)  connecting,required TResult Function( _Connected value)  connected,required TResult Function( _Disconnected value)  disconnected,required TResult Function( _Error value)  error,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( _Disconnected value)  disconnected,required TResult Function( _Connecting value)  connecting,required TResult Function( _Connected value)  connected,required TResult Function( _Disconnecting value)  disconnecting,required TResult Function( _Error value)  error,}){
 final _that = this;
 switch (_that) {
-case _Connecting():
+case _Disconnected():
+return disconnected(_that);case _Connecting():
 return connecting(_that);case _Connected():
-return connected(_that);case _Disconnected():
-return disconnected(_that);case _Error():
+return connected(_that);case _Disconnecting():
+return disconnecting(_that);case _Error():
 return error(_that);case _:
   throw StateError('Unexpected subclass');
 
@@ -104,13 +106,14 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( _Connecting value)?  connecting,TResult? Function( _Connected value)?  connected,TResult? Function( _Disconnected value)?  disconnected,TResult? Function( _Error value)?  error,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( _Disconnected value)?  disconnected,TResult? Function( _Connecting value)?  connecting,TResult? Function( _Connected value)?  connected,TResult? Function( _Disconnecting value)?  disconnecting,TResult? Function( _Error value)?  error,}){
 final _that = this;
 switch (_that) {
-case _Connecting() when connecting != null:
+case _Disconnected() when disconnected != null:
+return disconnected(_that);case _Connecting() when connecting != null:
 return connecting(_that);case _Connected() when connected != null:
-return connected(_that);case _Disconnected() when disconnected != null:
-return disconnected(_that);case _Error() when error != null:
+return connected(_that);case _Disconnecting() when disconnecting != null:
+return disconnecting(_that);case _Error() when error != null:
 return error(_that);case _:
   return null;
 
@@ -128,12 +131,13 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  connecting,TResult Function( VpnServer server)?  connected,TResult Function()?  disconnected,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  disconnected,TResult Function()?  connecting,TResult Function( VpnServer server,  DateTime connectedAt,  int uplinkBytes,  int downlinkBytes)?  connected,TResult Function()?  disconnecting,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
-case _Connecting() when connecting != null:
+case _Disconnected() when disconnected != null:
+return disconnected();case _Connecting() when connecting != null:
 return connecting();case _Connected() when connected != null:
-return connected(_that.server);case _Disconnected() when disconnected != null:
-return disconnected();case _Error() when error != null:
+return connected(_that.server,_that.connectedAt,_that.uplinkBytes,_that.downlinkBytes);case _Disconnecting() when disconnecting != null:
+return disconnecting();case _Error() when error != null:
 return error(_that.message);case _:
   return orElse();
 
@@ -152,12 +156,13 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  connecting,required TResult Function( VpnServer server)  connected,required TResult Function()  disconnected,required TResult Function( String message)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  disconnected,required TResult Function()  connecting,required TResult Function( VpnServer server,  DateTime connectedAt,  int uplinkBytes,  int downlinkBytes)  connected,required TResult Function()  disconnecting,required TResult Function( String message)  error,}) {final _that = this;
 switch (_that) {
-case _Connecting():
+case _Disconnected():
+return disconnected();case _Connecting():
 return connecting();case _Connected():
-return connected(_that.server);case _Disconnected():
-return disconnected();case _Error():
+return connected(_that.server,_that.connectedAt,_that.uplinkBytes,_that.downlinkBytes);case _Disconnecting():
+return disconnecting();case _Error():
 return error(_that.message);case _:
   throw StateError('Unexpected subclass');
 
@@ -175,12 +180,13 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  connecting,TResult? Function( VpnServer server)?  connected,TResult? Function()?  disconnected,TResult? Function( String message)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  disconnected,TResult? Function()?  connecting,TResult? Function( VpnServer server,  DateTime connectedAt,  int uplinkBytes,  int downlinkBytes)?  connected,TResult? Function()?  disconnecting,TResult? Function( String message)?  error,}) {final _that = this;
 switch (_that) {
-case _Connecting() when connecting != null:
+case _Disconnected() when disconnected != null:
+return disconnected();case _Connecting() when connecting != null:
 return connecting();case _Connected() when connected != null:
-return connected(_that.server);case _Disconnected() when disconnected != null:
-return disconnected();case _Error() when error != null:
+return connected(_that.server,_that.connectedAt,_that.uplinkBytes,_that.downlinkBytes);case _Disconnecting() when disconnecting != null:
+return disconnecting();case _Error() when error != null:
 return error(_that.message);case _:
   return null;
 
@@ -188,6 +194,38 @@ return error(_that.message);case _:
 }
 
 }
+
+/// @nodoc
+
+
+class _Disconnected implements VpnState {
+  const _Disconnected();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Disconnected);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'VpnState.disconnected()';
+}
+
+
+}
+
+
+
 
 /// @nodoc
 
@@ -225,10 +263,13 @@ String toString() {
 
 
 class _Connected implements VpnState {
-  const _Connected(this.server);
+  const _Connected(this.server, {required this.connectedAt, this.uplinkBytes = 0, this.downlinkBytes = 0});
   
 
  final  VpnServer server;
+ final  DateTime connectedAt;
+@JsonKey() final  int uplinkBytes;
+@JsonKey() final  int downlinkBytes;
 
 /// Create a copy of VpnState
 /// with the given fields replaced by the non-null parameter values.
@@ -240,16 +281,16 @@ _$ConnectedCopyWith<_Connected> get copyWith => __$ConnectedCopyWithImpl<_Connec
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Connected&&(identical(other.server, server) || other.server == server));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Connected&&(identical(other.server, server) || other.server == server)&&(identical(other.connectedAt, connectedAt) || other.connectedAt == connectedAt)&&(identical(other.uplinkBytes, uplinkBytes) || other.uplinkBytes == uplinkBytes)&&(identical(other.downlinkBytes, downlinkBytes) || other.downlinkBytes == downlinkBytes));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,server);
+int get hashCode => Object.hash(runtimeType,server,connectedAt,uplinkBytes,downlinkBytes);
 
 @override
 String toString() {
-  return 'VpnState.connected(server: $server)';
+  return 'VpnState.connected(server: $server, connectedAt: $connectedAt, uplinkBytes: $uplinkBytes, downlinkBytes: $downlinkBytes)';
 }
 
 
@@ -260,7 +301,7 @@ abstract mixin class _$ConnectedCopyWith<$Res> implements $VpnStateCopyWith<$Res
   factory _$ConnectedCopyWith(_Connected value, $Res Function(_Connected) _then) = __$ConnectedCopyWithImpl;
 @useResult
 $Res call({
- VpnServer server
+ VpnServer server, DateTime connectedAt, int uplinkBytes, int downlinkBytes
 });
 
 
@@ -277,10 +318,13 @@ class __$ConnectedCopyWithImpl<$Res>
 
 /// Create a copy of VpnState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? server = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? server = null,Object? connectedAt = null,Object? uplinkBytes = null,Object? downlinkBytes = null,}) {
   return _then(_Connected(
 null == server ? _self.server : server // ignore: cast_nullable_to_non_nullable
-as VpnServer,
+as VpnServer,connectedAt: null == connectedAt ? _self.connectedAt : connectedAt // ignore: cast_nullable_to_non_nullable
+as DateTime,uplinkBytes: null == uplinkBytes ? _self.uplinkBytes : uplinkBytes // ignore: cast_nullable_to_non_nullable
+as int,downlinkBytes: null == downlinkBytes ? _self.downlinkBytes : downlinkBytes // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
@@ -299,8 +343,8 @@ $VpnServerCopyWith<$Res> get server {
 /// @nodoc
 
 
-class _Disconnected implements VpnState {
-  const _Disconnected();
+class _Disconnecting implements VpnState {
+  const _Disconnecting();
   
 
 
@@ -310,7 +354,7 @@ class _Disconnected implements VpnState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Disconnected);
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Disconnecting);
 }
 
 
@@ -319,7 +363,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'VpnState.disconnected()';
+  return 'VpnState.disconnecting()';
 }
 
 
