@@ -4,6 +4,7 @@ import 'package:v2net/core/models/vpn_server/vpn_server.dart';
 import 'package:v2net/core/result.dart';
 import 'country_code_extractor.dart';
 import 'custom_json_parser.dart';
+import 'shadowsocks_uri_parser.dart';
 import 'subscription_fetcher.dart';
 import 'vless_uri_parser.dart';
 import 'xray_config_builder.dart';
@@ -13,12 +14,18 @@ class SubscriptionParserService {
   final Talker _talker;
   final SubscriptionFetcher _fetcher;
   final VlessUriParser _vlessUriParser;
+  final ShadowsocksUriParser _shadowsocksUriParser;
   final CustomJsonParser _customJsonParser;
 
   SubscriptionParserService(Talker talker)
     : _talker = talker,
       _fetcher = SubscriptionFetcher(),
       _vlessUriParser = VlessUriParser(
+        talker,
+        XrayConfigBuilder(),
+        CountryCodeExtractor(),
+      ),
+      _shadowsocksUriParser = ShadowsocksUriParser(
         talker,
         XrayConfigBuilder(),
         CountryCodeExtractor(),
@@ -31,45 +38,48 @@ class SubscriptionParserService {
       final List<VpnServer> servers = [];
       String textToParse = cleanInput;
 
-      // Input is either an http(s) subscription URL or a direct vless:// link.
+      // User can paste either a subscription URL or a direct vless://ss:// link.
       final lowerInput = cleanInput.toLowerCase();
       if (lowerInput.startsWith('http://') ||
           lowerInput.startsWith('https://')) {
-        _talker.debug('Parser: обнаружен URL, скачиваем данные...');
+        _talker.debug('Parser: found a URL, fetching...');
         textToParse = await _fetcher.fetchText(cleanInput);
-      } else if (!_vlessUriParser.isVless(cleanInput)) {
+      } else if (!_isDirectLink(cleanInput)) {
         return const Failure(
-          'Неизвестный формат ввода. Ожидается http(s) ссылка или vless://',
+          'Unknown input format. Expected an http(s) link, vless:// or ss://',
         );
       }
 
-      // Detect the content shape and pick the matching parsing strategy.
-      if (textToParse.trim().startsWith('[')) {
+      final trimmed = textToParse.trim();
+      if (trimmed.startsWith('[')) {
         // Raw JSON array (custom outbound format).
-        _talker.debug('Parser: обнаружен сырой JSON массив');
+        _talker.debug('Parser: found a raw JSON array');
         servers.addAll(_customJsonParser.parse(textToParse, cleanInput));
-      } else if (_vlessUriParser.isVless(textToParse)) {
-        // Plain text with one or more vless:// links.
-        _talker.debug('Parser: обнаружены прямые ссылки (URI)');
-        servers.addAll(_vlessUriParser.parseLines(textToParse, cleanInput));
       } else {
-        // Base64-encoded subscription (standard format).
-        _talker.debug('Parser: обнаружен Base64, расшифровываем...');
-        final decodedText = _fetcher.decodeBase64(textToParse);
-        servers.addAll(_vlessUriParser.parseLines(decodedText, cleanInput));
+        // Plain text (or base64) with a mix of vless:// / ss:// links.
+        String decoded = textToParse;
+        if (!_isDirectLink(trimmed)) {
+          _talker.debug('Parser: found base64, decoding...');
+          decoded = _fetcher.decodeBase64(textToParse);
+        } else {
+          _talker.debug('Parser: found direct links (URI)');
+        }
+        servers.addAll(_vlessUriParser.parseLines(decoded, cleanInput));
+        servers.addAll(_shadowsocksUriParser.parseLines(decoded, cleanInput));
       }
 
       if (servers.isEmpty) {
-        return const Failure(
-          'Не удалось найти ни одного поддерживаемого сервера в ответе',
-        );
+        return const Failure('No supported servers were found in the response');
       }
 
-      _talker.info('Parser: успешно распарсено серверов: ${servers.length}');
+      _talker.info('Parser: successfully parsed ${servers.length} server(s)');
       return Success(servers);
     } catch (e, st) {
-      _talker.handle(e, st, 'Parser: критическая ошибка при обработке');
-      return Failure('Не удалось обработать данные: $e');
+      _talker.handle(e, st, 'Parser: unhandled error while processing');
+      return Failure('Failed to process the data: $e');
     }
   }
+
+  bool _isDirectLink(String s) =>
+      _vlessUriParser.isVless(s) || _shadowsocksUriParser.isShadowsocks(s);
 }
