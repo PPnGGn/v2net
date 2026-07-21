@@ -9,7 +9,6 @@ void main() {
   final parser = CustomJsonParser(Talker(), CountryCodeExtractor());
 
   group('CustomJsonParser.parse', () {
-
     test('parses the vnext outbound shape and fills every field', () {
       final json = jsonEncode([
         {
@@ -45,7 +44,6 @@ void main() {
       expect(server.countryCode, equals('DE'));
     });
 
- 
     test('parses the flat address outbound shape with a string port', () {
       final json = jsonEncode([
         {
@@ -95,7 +93,6 @@ void main() {
       expect(servers, hasLength(1));
     });
 
-
     test('skips an object with no proxy outbound at all', () {
       final json = jsonEncode([
         {
@@ -111,7 +108,6 @@ void main() {
 
       expect(servers, isEmpty);
     });
-
 
     test('skips objects with an invalid or out-of-range port', () {
       final json = jsonEncode([
@@ -132,7 +128,6 @@ void main() {
 
       expect(servers, isEmpty);
     });
-
 
     test('defaults the title to "Unknown Server" when remarks is missing', () {
       final json = jsonEncode([
@@ -157,7 +152,6 @@ void main() {
       expect(servers.single.title, equals('Unknown Server'));
     });
 
-
     test('builds id without a uuid segment when users is empty', () {
       final json = jsonEncode([
         {
@@ -180,7 +174,6 @@ void main() {
       expect(servers.single.id, equals('host.example.com:443'));
     });
 
-  
     test('skips a broken object but keeps the valid ones around it', () {
       final json = jsonEncode([
         {
@@ -207,16 +200,74 @@ void main() {
       expect(servers.single.title, equals('Valid One'));
     });
 
-
     test('throws when the top-level JSON value is not an array', () {
       expect(
         () => parser.parse(jsonEncode({'not': 'an array'}), 'sub'),
         throwsA(isA<TypeError>()),
       );
     });
+
+    test(
+      'strips geosite:/geoip: entries (unresolvable without geosite.dat)',
+      () {
+        final json = jsonEncode([
+          {
+            'remarks': 'Server',
+            'outbounds': [
+              {
+                'tag': 'proxy',
+                'settings': {
+                  'address': 'host.example.com',
+                  'port': 443,
+                  'users': [
+                    {'id': 'uuid'},
+                  ],
+                },
+              },
+            ],
+            'routing': {
+              'rules': [
+                {
+                  'type': 'field',
+                  'outboundTag': 'direct',
+                  'domain': ['geosite:category-ru', 'domain:example.com'],
+                },
+                {
+                  'type': 'field',
+                  'outboundTag': 'direct',
+                  'ip': ['geoip:cn', '10.0.0.0/8'],
+                },
+                // Only a geosite entry -> rule becomes empty and is dropped.
+                {
+                  'type': 'field',
+                  'outboundTag': 'block',
+                  'domain': ['geosite:category-ads'],
+                },
+                // No domain/ip at all -> untouched.
+                {
+                  'type': 'field',
+                  'outboundTag': 'direct',
+                  'protocol': ['bittorrent'],
+                },
+              ],
+            },
+          },
+        ]);
+
+        final servers = parser.parse(json, 'my-subscription');
+        final routing =
+            jsonDecode(servers.single.configJson)['routing']
+                as Map<String, dynamic>;
+        final rules = (routing['rules'] as List).cast<Map<String, dynamic>>();
+
+        expect(rules, hasLength(3));
+        expect(rules[0]['domain'], equals(['domain:example.com']));
+        expect(rules[1]['ip'], equals(['10.0.0.0/8']));
+        expect(rules[2]['protocol'], equals(['bittorrent']));
+      },
+    );
   });
 }
-
 
 Map<String, dynamic> _serverWithPort(int port) => {
   'remarks': 'Bad Port $port',

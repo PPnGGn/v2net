@@ -29,8 +29,9 @@ class VlessUriParser {
         final address = uri.host;
         final port = uri.port;
 
-        if (uuid.isEmpty || address.isEmpty || port <= 0 || port > 65535)
+        if (uuid.isEmpty || address.isEmpty || port <= 0 || port > 65535) {
           continue;
+        }
 
         final query = uri.queryParameters;
         final sni = query['sni'] ?? '';

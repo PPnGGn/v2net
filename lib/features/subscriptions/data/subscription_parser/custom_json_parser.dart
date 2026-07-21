@@ -46,7 +46,7 @@ class CustomJsonParser {
             subscriptionId: sourceId,
             title: title,
             countryCode: _countryCodeExtractor.extract(title),
-            configJson: jsonEncode(config),
+            configJson: jsonEncode(_stripUnsupportedRouting(config)),
           ),
         );
       } catch (e) {
@@ -92,5 +92,57 @@ class CustomJsonParser {
         : (value is String ? int.tryParse(value) : null);
     if (port == null || port <= 0 || port > 65535) return null;
     return port;
+  }
+
+  static const _geoPrefixByField = {'domain': 'geosite:', 'ip': 'geoip:'};
+  // Structural rule keys — anything else left on a rule is a real matcher.
+  static const _ruleMetaKeys = {'type', 'outboundTag', 'balancerTag'};
+
+  // Xray needs geosite.dat/geoip.dat to resolve "geosite:"/"geoip:" entries;
+  // we don't bundle those files, so any routing rule using them fails the
+  // whole config build. Strip them instead of failing the connection.
+  //
+  // A rule with nothing left to match on would otherwise match *all*
+  // traffic, so such rules are dropped entirely rather than left empty.
+  Map<String, dynamic> _stripUnsupportedRouting(Map<String, dynamic> config) {
+    final routing = config['routing'];
+    if (routing is! Map<String, dynamic> || routing['rules'] is! List) {
+      return config;
+    }
+
+    final rules = (routing['rules'] as List)
+        .map((rule) {
+          if (rule is! Map<String, dynamic>) return rule;
+          final sanitized = Map<String, dynamic>.from(rule);
+          _geoPrefixByField.forEach((field, prefix) {
+            final values = sanitized[field];
+            if (values is! List) return;
+            final kept = values
+                .where((v) => !(v is String && v.startsWith(prefix)))
+                .toList();
+            if (kept.isEmpty) {
+              sanitized.remove(field);
+            } else {
+              sanitized[field] = kept;
+            }
+          });
+          return sanitized;
+        })
+        .where((rule) {
+          if (rule is! Map<String, dynamic>) return true;
+          final hasMatcher = rule.keys.any((k) => !_ruleMetaKeys.contains(k));
+          if (!hasMatcher) {
+            _talker.debug(
+              'Parser: dropped a routing rule left with nothing to match after stripping geosite/geoip',
+            );
+          }
+          return hasMatcher;
+        })
+        .toList();
+
+    return {
+      ...config,
+      'routing': {...routing, 'rules': rules},
+    };
   }
 }

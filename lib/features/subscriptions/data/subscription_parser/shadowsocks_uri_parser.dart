@@ -124,8 +124,9 @@ class ShadowsocksUriParser {
       final close = hostPort.indexOf(']');
       if (close < 0 ||
           close + 1 >= hostPort.length ||
-          hostPort[close + 1] != ':')
+          hostPort[close + 1] != ':') {
         return null;
+      }
       host = hostPort.substring(1, close);
       portStr = hostPort.substring(close + 2);
     } else {
