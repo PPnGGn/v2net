@@ -20,6 +20,7 @@ class HomePage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.gray10,
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         title: const Text('V2Net'),

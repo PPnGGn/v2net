@@ -87,128 +87,115 @@ class _AddSubscriptionDialogState extends State<AddSubscriptionDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final viewInsets = MediaQuery.viewInsetsOf(context);
-    final topSafeArea = MediaQuery.paddingOf(context).top;
-    final availableHeight =
-        MediaQuery.sizeOf(context).height -
-        viewInsets.bottom -
-        topSafeArea -
-        48;
     return Dialog(
-      alignment: Alignment.topCenter,
       backgroundColor: AppColors.gray181F25,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      insetPadding: EdgeInsets.only(left: 24, right: 24, top: topSafeArea + 24),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: availableHeight),
-        child: GestureDetector(
-          onTap: () {
-            if (!_inputFocusNode.hasFocus && !_nameFocusNode.hasFocus) {
-              _inputFocusNode.requestFocus();
-            }
-          },
-          behavior: HitTestBehavior.opaque,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppColors.green19FF90.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.add_link_rounded,
-                        color: AppColors.green19FF90,
-                      ),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      child: GestureDetector(
+        onTap: () {
+          if (!_inputFocusNode.hasFocus && !_nameFocusNode.hasFocus) {
+            _inputFocusNode.requestFocus();
+          }
+        },
+        behavior: HitTestBehavior.opaque,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.green19FF90.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Text(
-                        'Новая подписка',
-                        style: TextStyle(
-                          color: AppColors.white,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                    child: const Icon(
+                      Icons.add_link_rounded,
+                      color: AppColors.green19FF90,
                     ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.close_rounded,
-                        color: AppColors.grayA9BAC6,
-                      ),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: _inputController,
-                  focusNode: _inputFocusNode,
-                  minLines: 2,
-                  maxLines: 5,
-                  keyboardType: TextInputType.url,
-                  textInputAction: TextInputAction.next,
-                  onSubmitted: (_) => _nameFocusNode.requestFocus(),
-                  style: const TextStyle(color: AppColors.white),
-                  decoration: _fieldDecoration(
-                    label: 'Источник',
-                    hint: 'https://…, vless://…, ss://… или JSON',
                   ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _nameController,
-                  focusNode: _nameFocusNode,
-                  textInputAction: TextInputAction.done,
-                  onSubmitted: (_) => _submit(),
-                  style: const TextStyle(color: AppColors.white),
-                  decoration: _fieldDecoration(
-                    label: 'Название (необязательно)',
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Новая подписка',
+                      style: TextStyle(
+                        color: AppColors.white,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                ),
-                if (_error != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    _error!,
-                    style: const TextStyle(color: AppColors.redFF6A55),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      color: AppColors.grayA9BAC6,
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
-                const SizedBox(height: 20),
-                SizedBox(
-                  height: 52,
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.green19FF90,
-                      foregroundColor: Colors.black,
-                      disabledBackgroundColor: AppColors.gray2E2E3A,
-                      disabledForegroundColor: AppColors.grayA9BAC6,
-                      textStyle: const TextStyle(fontWeight: FontWeight.w700),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    onPressed: _submitting ? null : _submit,
-                    child: _submitting
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.black,
-                            ),
-                          )
-                        : const Text('Добавить'),
-                  ),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _inputController,
+                focusNode: _inputFocusNode,
+                minLines: 2,
+                maxLines: 5,
+                keyboardType: TextInputType.url,
+                textInputAction: TextInputAction.next,
+                onSubmitted: (_) => _nameFocusNode.requestFocus(),
+                style: const TextStyle(color: AppColors.white),
+                decoration: _fieldDecoration(
+                  label: 'Источник',
+                  hint: 'https://…, vless://…, ss://… или JSON',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _nameController,
+                focusNode: _nameFocusNode,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _submit(),
+                style: const TextStyle(color: AppColors.white),
+                decoration: _fieldDecoration(label: 'Название (необязательно)'),
+              ),
+              if (_error != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  _error!,
+                  style: const TextStyle(color: AppColors.redFF6A55),
                 ),
               ],
-            ),
+              const SizedBox(height: 20),
+              SizedBox(
+                height: 52,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.green19FF90,
+                    foregroundColor: Colors.black,
+                    disabledBackgroundColor: AppColors.gray2E2E3A,
+                    disabledForegroundColor: AppColors.grayA9BAC6,
+                    textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  onPressed: _submitting ? null : _submit,
+                  child: _submitting
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.black,
+                          ),
+                        )
+                      : const Text('Добавить'),
+                ),
+              ),
+            ],
           ),
         ),
       ),
