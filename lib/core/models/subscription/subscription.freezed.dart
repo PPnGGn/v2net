@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Subscription {
 
- String get id; String get url; String get name; DateTime get lastUpdatedAt;
+ String get id; String? get url; String get name; DateTime get lastUpdatedAt;
 /// Create a copy of Subscription
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +48,7 @@ abstract mixin class $SubscriptionCopyWith<$Res>  {
   factory $SubscriptionCopyWith(Subscription value, $Res Function(Subscription) _then) = _$SubscriptionCopyWithImpl;
 @useResult
 $Res call({
- String id, String url, String name, DateTime lastUpdatedAt
+ String id, String? url, String name, DateTime lastUpdatedAt
 });
 
 
@@ -65,11 +65,11 @@ class _$SubscriptionCopyWithImpl<$Res>
 
 /// Create a copy of Subscription
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? url = null,Object? name = null,Object? lastUpdatedAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? url = freezed,Object? name = null,Object? lastUpdatedAt = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
-as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,url: freezed == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
+as String?,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,lastUpdatedAt: null == lastUpdatedAt ? _self.lastUpdatedAt : lastUpdatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));
@@ -156,7 +156,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String url,  String name,  DateTime lastUpdatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? url,  String name,  DateTime lastUpdatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Subscription() when $default != null:
 return $default(_that.id,_that.url,_that.name,_that.lastUpdatedAt);case _:
@@ -177,7 +177,7 @@ return $default(_that.id,_that.url,_that.name,_that.lastUpdatedAt);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String url,  String name,  DateTime lastUpdatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? url,  String name,  DateTime lastUpdatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _Subscription():
 return $default(_that.id,_that.url,_that.name,_that.lastUpdatedAt);case _:
@@ -197,7 +197,7 @@ return $default(_that.id,_that.url,_that.name,_that.lastUpdatedAt);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String url,  String name,  DateTime lastUpdatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? url,  String name,  DateTime lastUpdatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _Subscription() when $default != null:
 return $default(_that.id,_that.url,_that.name,_that.lastUpdatedAt);case _:
@@ -216,7 +216,7 @@ class _Subscription implements Subscription {
   factory _Subscription.fromJson(Map<String, dynamic> json) => _$SubscriptionFromJson(json);
 
 @override final  String id;
-@override final  String url;
+@override final  String? url;
 @override final  String name;
 @override final  DateTime lastUpdatedAt;
 
@@ -253,7 +253,7 @@ abstract mixin class _$SubscriptionCopyWith<$Res> implements $SubscriptionCopyWi
   factory _$SubscriptionCopyWith(_Subscription value, $Res Function(_Subscription) _then) = __$SubscriptionCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String url, String name, DateTime lastUpdatedAt
+ String id, String? url, String name, DateTime lastUpdatedAt
 });
 
 
@@ -270,11 +270,11 @@ class __$SubscriptionCopyWithImpl<$Res>
 
 /// Create a copy of Subscription
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? url = null,Object? name = null,Object? lastUpdatedAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? url = freezed,Object? name = null,Object? lastUpdatedAt = null,}) {
   return _then(_Subscription(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
-as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,url: freezed == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
+as String?,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,lastUpdatedAt: null == lastUpdatedAt ? _self.lastUpdatedAt : lastUpdatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));

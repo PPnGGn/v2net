@@ -9,6 +9,13 @@ import 'subscription_fetcher.dart';
 import 'vless_uri_parser.dart';
 import 'xray_config_builder.dart';
 
+class ParsedSubscription {
+  ParsedSubscription({required this.servers, this.suggestedName});
+
+  final List<VpnServer> servers;
+  final String? suggestedName;
+}
+
 @lazySingleton
 class SubscriptionParserService {
   final Talker _talker;
@@ -32,31 +39,33 @@ class SubscriptionParserService {
       ),
       _customJsonParser = CustomJsonParser(talker, CountryCodeExtractor());
 
-  Future<Result<List<VpnServer>>> parseFromInput(String input) async {
+  Future<Result<ParsedSubscription>> parseFromInput(String input) async {
     try {
       final cleanInput = input.trim();
       final List<VpnServer> servers = [];
       String textToParse = cleanInput;
+      String? suggestedName;
 
-      // User can paste either a subscription URL or a direct vless://ss:// link.
       final lowerInput = cleanInput.toLowerCase();
       if (lowerInput.startsWith('http://') ||
           lowerInput.startsWith('https://')) {
         _talker.debug('Parser: found a URL, fetching...');
-        textToParse = await _fetcher.fetchText(cleanInput);
-      } else if (!_isDirectLink(cleanInput)) {
+        final response = await _fetcher.fetch(cleanInput);
+        textToParse = response.body;
+        suggestedName = response.profileTitle;
+      } else if (!_isDirectLink(cleanInput) &&
+          !cleanInput.startsWith('[') &&
+          !cleanInput.startsWith('{')) {
         return const Failure(
-          'Unknown input format. Expected an http(s) link, vless:// or ss://',
+          'Unknown input format. Expected an http(s) link, vless://, ss:// or a raw JSON config',
         );
       }
 
       final trimmed = textToParse.trim();
-      if (trimmed.startsWith('[')) {
-        // Raw JSON array (custom outbound format).
-        _talker.debug('Parser: found a raw JSON array');
+      if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+        _talker.debug('Parser: found a raw JSON config');
         servers.addAll(_customJsonParser.parse(textToParse, cleanInput));
       } else {
-        // Plain text (or base64) with a mix of vless:// / ss:// links.
         String decoded = textToParse;
         if (!_isDirectLink(trimmed)) {
           _talker.debug('Parser: found base64, decoding...');
@@ -73,7 +82,9 @@ class SubscriptionParserService {
       }
 
       _talker.info('Parser: successfully parsed ${servers.length} server(s)');
-      return Success(servers);
+      return Success(
+        ParsedSubscription(servers: servers, suggestedName: suggestedName),
+      );
     } catch (e, st) {
       _talker.handle(e, st, 'Parser: unhandled error while processing');
       return Failure('Failed to process the data: $e');

@@ -42,17 +42,16 @@ class FileSubscriptionStorage implements SubscriptionStorage {
   Future<void> save(StoredSubscription subscription) async {
     await _dir.create(recursive: true);
 
-    final envelope = {
-      'version': _schemaVersion,
-      'data': subscription.toJson(),
-    };
+    final envelope = {'version': _schemaVersion, 'data': subscription.toJson()};
 
     final target = _fileFor(subscription.subscription.id);
     final tmp = File('${target.path}$_tmpSuffix');
     await tmp.writeAsString(jsonEncode(envelope), flush: true);
     await tmp.rename(target.path);
 
-    _talker.debug('Storage: saved subscription ${subscription.subscription.id}');
+    _talker.debug(
+      'Storage: saved subscription ${subscription.subscription.id}',
+    );
   }
 
   @override
@@ -64,7 +63,6 @@ class FileSubscriptionStorage implements SubscriptionStorage {
     }
   }
 
-  
   Future<StoredSubscription?> _tryRead(File file) async {
     try {
       final envelope = jsonDecode(await file.readAsString());

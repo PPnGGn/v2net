@@ -34,3 +34,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/png/
+  fonts:
+    - family: Oswald
+      fonts:
+        - asset: assets/oswald/Oswald.ttf

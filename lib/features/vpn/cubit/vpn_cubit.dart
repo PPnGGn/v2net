@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:bloc/bloc.dart';
+import 'package:flutter/widgets.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:talker_flutter/talker_flutter.dart';
@@ -25,28 +26,50 @@ class VpnCubit extends Cubit<VpnState> {
     _currentServer = _sessionStore.load();
     _statusSubscription = _repository.status.listen(_onNativeStatus);
     _trafficSubscription = _repository.traffic.listen(_onTraffic);
+    _lifecycleListener = AppLifecycleListener(onResume: _syncStatus);
     _syncStatus();
   }
-
   static const _connectTimeout = Duration(seconds: 15);
   final VpnRepository _repository;
   final VpnSessionStore _sessionStore;
   final Talker _talker;
 
   late final StreamSubscription<VpnStatusMessage> _statusSubscription;
-  late final StreamSubscription<VpnTrafficMessage> _trafficSubscription;
+  late final StreamSubscription<VpnTrafficMessage>
+  _trafficSubscription; 
+  late final AppLifecycleListener _lifecycleListener; 
   VpnServer? _currentServer;
   DateTime? _connectedAt;
   Timer? _connectTimer;
+  VpnServer? _pendingServer; 
 
   Future<void> connect(VpnServer server) async {
-    if (state is _Connecting ||
-        state is _Connected ||
-        state is _Disconnecting) {
-      _talker.debug('Cubit: connect ignored, state: $state');
-      return;
+    switch (state) {
+      case _Connected() || _Connecting():
+        final activeId = _currentServer?.id;
+        if (activeId == server.id) {
+          _talker.debug('Cubit: connect ignored, already on ${server.id}');
+          return;
+        }
+        _talker.debug('Cubit: switching server $activeId -> ${server.id}');
+        _pendingServer = server;
+        await _requestStop();
+      case _Disconnecting():
+        _talker.debug(
+          'Cubit: queued switch to ${server.id} while disconnecting',
+        );
+        _pendingServer = server;
+      default:
+        await _startConnection(server);
     }
+  }
 
+  void switchServerIfActive(VpnServer server) {
+    final isActive = state is _Connected || state is _Connecting;
+    if (isActive) unawaited(connect(server));
+  }
+
+  Future<void> _startConnection(VpnServer server) async {
     _talker.debug('Cubit: connecting to ${server.title}');
     _currentServer = server;
     unawaited(_sessionStore.save(server));
@@ -59,12 +82,18 @@ class VpnCubit extends Cubit<VpnState> {
         _startConnectTimeout();
       case Failure(:final message):
         _talker.error('Cubit: connect failed -> $message');
+        _pendingServer = null;
         _clearSession();
         emit(VpnState.error(message));
     }
   }
 
   Future<void> disconnect() async {
+    _pendingServer = null;
+    await _requestStop();
+  }
+
+  Future<void> _requestStop() async {
     if (state is _Disconnected || state is _Disconnecting) {
       _talker.debug('Cubit: disconnect ignored, state: $state');
       return;
@@ -77,6 +106,7 @@ class VpnCubit extends Cubit<VpnState> {
     final result = await _repository.stop();
     if (result case Failure(:final message)) {
       _talker.error('Cubit: disconnect failed -> $message');
+      _pendingServer = null;
       emit(VpnState.error(message));
     }
   }
@@ -98,13 +128,18 @@ class VpnCubit extends Cubit<VpnState> {
         if (state is! _Connecting) emit(const VpnState.connecting());
         _startConnectTimeout();
       case VpnStatus.connected:
-        _connectTimer?.cancel();
+        _connectTimer
+            ?.cancel(); 
         final server = _currentServer;
         if (server == null) {
           _talker.warning('Cubit: connected from native with no known server');
           return;
         }
-        _connectedAt = DateTime.now();
+
+        final connectedAtMs = message.connectedAtEpochMs;
+        _connectedAt = connectedAtMs != null
+            ? DateTime.fromMillisecondsSinceEpoch(connectedAtMs)
+            : (_connectedAt ?? DateTime.now());
         emit(VpnState.connected(server, connectedAt: _connectedAt!));
       case VpnStatus.disconnecting:
         _connectTimer?.cancel();
@@ -113,8 +148,14 @@ class VpnCubit extends Cubit<VpnState> {
         _connectTimer?.cancel();
         _clearSession();
         emit(const VpnState.disconnected());
+        final pending = _pendingServer;
+        if (pending != null) {
+          _pendingServer = null;
+          unawaited(_startConnection(pending));
+        }
       case VpnStatus.error:
         _connectTimer?.cancel();
+        _pendingServer = null;
         _clearSession();
         emit(VpnState.error(message.error ?? 'VPN error'));
     }
@@ -137,6 +178,7 @@ class VpnCubit extends Cubit<VpnState> {
     _connectTimer = Timer(_connectTimeout, () {
       if (state is! _Connecting) return;
       _talker.error('Cubit: timed out waiting for tunnel confirmation');
+      _pendingServer = null;
       _clearSession();
       unawaited(_repository.stop());
       emit(const VpnState.error('Tunnel did not come up within 15 seconds'));
@@ -154,6 +196,7 @@ class VpnCubit extends Cubit<VpnState> {
     _connectTimer?.cancel();
     _statusSubscription.cancel();
     _trafficSubscription.cancel();
+    _lifecycleListener.dispose();
     return super.close();
   }
 }

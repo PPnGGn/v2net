@@ -12,14 +12,13 @@ class VlessUriParser {
 
   bool isVless(String s) => s.trim().toLowerCase().startsWith('vless://');
 
-  // plain text, one link per line
   List<VpnServer> parseLines(String text, String sourceId) {
     final lines = text
         .split(RegExp(r'\r?\n'))
         .where((l) => l.trim().isNotEmpty);
     final List<VpnServer> result = [];
 
-    for (final line in lines) {
+    for (final (index, line) in lines.indexed) {
       if (!isVless(line)) continue;
 
       try {
@@ -39,7 +38,6 @@ class VlessUriParser {
         final fp = query['fp'] ?? 'chrome';
         final flow = query['flow'] ?? '';
 
-        // fragment holds the human-readable remark, usually a flag + country name
         final rawRemarks = uri.fragment;
         final title = rawRemarks.isNotEmpty
             ? Uri.decodeComponent(rawRemarks)
@@ -59,7 +57,7 @@ class VlessUriParser {
 
         result.add(
           VpnServer(
-            id: '$address:$port:$uuid',
+            id: '$address:$port:$uuid:#$index',
             subscriptionId: sourceId,
             title: title,
             countryCode: _countryCodeExtractor.extract(title),
@@ -67,7 +65,6 @@ class VlessUriParser {
           ),
         );
       } catch (e) {
-        // one bad link shouldn't break the whole subscription
         _talker.warning('Parser: skipped a broken link -> $e');
       }
     }

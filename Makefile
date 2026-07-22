@@ -11,3 +11,8 @@ generate-vpn-api:
 clean-vpn-api:
 	rm -f lib/features/vpn/data/vpn_api.g.dart
 	rm -f android/app/src/main/kotlin/com/v2net/VpnApi.g.kt
+
+# Native tunnel core (Xray-core + tun2socks), shared by Android/iOS/desktop.
+# See ../v2net-core/README.md.
+build-core-android:
+	$(MAKE) -C ../v2net-core bind-android

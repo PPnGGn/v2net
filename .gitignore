@@ -4,6 +4,7 @@ plan/
 *.log
 *.pyc
 *.swp
+tmp_*.json
 .DS_Store
 .atom/
 .build/
@@ -12,6 +13,15 @@ plan/
 .svn/
 .swiftpm/
 migrate_working_dir/
+
+# Code generation (build_runner, freezed, injectable, pigeon)
+*.g.dart
+*.freezed.dart
+*.mocks.dart
+*.config.dart
+lib/app/di/injector.config.dart
+*.g.kt
+*.g.swift
 
 # IntelliJ related
 *.iml

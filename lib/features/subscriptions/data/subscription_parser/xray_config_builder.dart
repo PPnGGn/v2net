@@ -123,6 +123,10 @@ class XrayConfigBuilder {
           "tag": "block",
         },
       ],
+      "stats": <String, dynamic>{},
+      "policy": {
+        "system": {"statsOutboundUplink": true, "statsOutboundDownlink": true},
+      },
       "remarks": title,
       "routing": {
         "domainMatcher": "hybrid",

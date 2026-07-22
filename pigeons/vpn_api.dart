@@ -11,6 +11,7 @@ class VpnConfigMessage {
 class VpnStatusMessage {
   VpnStatus status;
   String? error;
+  int? connectedAtEpochMs;
 }
 
 class VpnLogMessage {

@@ -7,15 +7,14 @@ import 'country_code_extractor.dart';
 class CustomJsonParser {
   final Talker _talker;
   final CountryCodeExtractor _countryCodeExtractor;
-
   CustomJsonParser(this._talker, this._countryCodeExtractor);
 
-  // Parses the custom JSON outbound array format into servers.
   List<VpnServer> parse(String rawJson, String sourceId) {
-    final list = jsonDecode(rawJson) as List<dynamic>;
+    final decoded = jsonDecode(rawJson);
+    final list = decoded is List ? decoded : [decoded];
     final List<VpnServer> result = [];
 
-    for (final item in list) {
+    for (final (index, item) in list.indexed) {
       try {
         final config = item as Map<String, dynamic>;
         final title = config['remarks'] as String? ?? 'Unknown Server';
@@ -30,7 +29,8 @@ class CustomJsonParser {
 
         if (proxyOutbound == null) continue;
 
-        final settings = proxyOutbound['settings'] as Map<String, dynamic>;
+        final normalizedProxy = _normalizeOutboundSettings(proxyOutbound);
+        final settings = normalizedProxy['settings'] as Map<String, dynamic>;
         final addressPort = _extractAddressPort(settings);
         if (addressPort == null) continue;
 
@@ -38,13 +38,23 @@ class CustomJsonParser {
         final port = addressPort.$2;
         final uuid = addressPort.$3;
 
+        final baseId = uuid.isNotEmpty
+            ? '$address:$port:$uuid'
+            : '$address:$port';
+
         result.add(
           VpnServer(
-            id: uuid.isNotEmpty ? '$address:$port:$uuid' : '$address:$port',
+            id: '$baseId:#$index',
             subscriptionId: sourceId,
             title: title,
             countryCode: _countryCodeExtractor.extract(title),
-            configJson: jsonEncode(_stripUnsupportedRouting(config)),
+            configJson: jsonEncode(
+              _enableStats(
+                _stripUnsupportedRouting(config),
+                proxyOutbound,
+                normalizedProxy,
+              ),
+            ),
           ),
         );
       } catch (e) {
@@ -54,7 +64,82 @@ class CustomJsonParser {
     return result;
   }
 
-  // Extracts (address, port, uuid) from either a "vnext" or a flat "address" outbound shape.
+  Map<String, dynamic> _normalizeOutboundSettings(
+    Map<String, dynamic> outbound,
+  ) {
+    final settings = outbound['settings'] as Map<String, dynamic>?;
+    if (settings == null || !settings.containsKey('address')) return outbound;
+
+    final protocol = outbound['protocol'] as String? ?? '';
+    final Map<String, dynamic> normalized;
+    switch (protocol) {
+      case 'vless':
+        if (settings.containsKey('vnext')) return outbound;
+        normalized = {
+          'vnext': [
+            {
+              'address': settings['address'],
+              'port': settings['port'],
+              'users': [
+                {
+                  'id': settings['id'],
+                  'encryption': settings['encryption'] ?? 'none',
+                  'flow': settings['flow'] ?? '',
+                  'level': settings['level'] ?? 8,
+                },
+              ],
+            },
+          ],
+        };
+      case 'shadowsocks':
+        if (settings.containsKey('servers')) return outbound;
+        normalized = {
+          'servers': [
+            {
+              'address': settings['address'],
+              'port': settings['port'],
+              'method': settings['method'],
+              'password': settings['password'],
+              'level': settings['level'] ?? 8,
+            },
+          ],
+        };
+      default:
+        return outbound;
+    }
+    return {...outbound, 'settings': normalized};
+  }
+
+  Map<String, dynamic> _enableStats(
+    Map<String, dynamic> config,
+    Map<String, dynamic> originalProxyOutbound,
+    Map<String, dynamic> normalizedProxyOutbound,
+  ) {
+    final outbounds = (config['outbounds'] as List<dynamic>)
+        .map(
+          (o) => o == originalProxyOutbound
+              ? {...normalizedProxyOutbound, 'tag': 'proxy'}
+              : o,
+        )
+        .toList();
+
+    return {
+      ...config,
+      'outbounds': outbounds,
+      'stats': <String, dynamic>{},
+      'policy': {
+        ...?config['policy'] as Map<String, dynamic>?,
+        'system': {
+          ...?(config['policy'] as Map<String, dynamic>?)?['system']
+              as Map<String, dynamic>?,
+          'statsOutboundUplink': true,
+          'statsOutboundDownlink': true,
+        },
+      },
+    };
+  }
+
+  // Extracts (address, port, uuid) from a "vnext" or "servers" outbound shape.
   (String, int, String)? _extractAddressPort(Map<String, dynamic> settings) {
     if (settings.containsKey('vnext')) {
       final vnext = settings['vnext'] as List<dynamic>;
@@ -64,10 +149,13 @@ class CustomJsonParser {
       if (port == null) return null;
       return (node['address'] as String, port, _extractUuid(node));
     }
-    if (settings.containsKey('address')) {
-      final port = _parsePort(settings['port']);
+    if (settings.containsKey('servers')) {
+      final servers = settings['servers'] as List<dynamic>;
+      if (servers.isEmpty) return null;
+      final node = servers[0] as Map<String, dynamic>;
+      final port = _parsePort(node['port']);
       if (port == null) return null;
-      return (settings['address'] as String, port, _extractUuid(settings));
+      return (node['address'] as String, port, '');
     }
     return null;
   }

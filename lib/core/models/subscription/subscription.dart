@@ -7,7 +7,7 @@ part 'subscription.g.dart';
 abstract class Subscription with _$Subscription {
   const factory Subscription({
     required String id,
-    required String url,
+    required String? url,
     required String name,
     required DateTime lastUpdatedAt,
   }) = _Subscription;

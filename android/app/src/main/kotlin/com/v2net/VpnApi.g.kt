@@ -205,10 +205,6 @@ class FlutterError (
   val details: Any? = null
 ) : RuntimeException()
 
-/**
- * Lifecycle of the VPN tunnel. The native side is the source of truth and
- * pushes every transition through [VpnEventReceiver.onStatusChanged].
- */
 enum class VpnStatus(val raw: Int) {
   DISCONNECTED(0),
   CONNECTING(1),
@@ -223,11 +219,7 @@ enum class VpnStatus(val raw: Int) {
   }
 }
 
-/**
- * Everything the native side needs to bring up a tunnel for one server.
- *
- * Generated class from Pigeon that represents data sent in messages.
- */
+/** Generated class from Pigeon that represents data sent in messages. */
 data class VpnConfigMessage (
   val configJson: String,
   val serverId: String? = null,
@@ -269,27 +261,30 @@ data class VpnConfigMessage (
   }
 }
 
-/**
- * A status transition. [error] is only meaningful for [VpnStatus.error].
- *
- * Generated class from Pigeon that represents data sent in messages.
- */
+/** Generated class from Pigeon that represents data sent in messages. */
 data class VpnStatusMessage (
   val status: VpnStatus,
-  val error: String? = null
+  val error: String? = null,
+  /**
+   * Wall-clock epoch millis when the tunnel became connected. Set once per
+   * session by the native side so the Flutter timer survives app restarts.
+   */
+  val connectedAtEpochMs: Long? = null
 )
  {
   companion object {
     fun fromList(pigeonVar_list: List<Any?>): VpnStatusMessage {
       val status = pigeonVar_list[0] as VpnStatus
       val error = pigeonVar_list[1] as String?
-      return VpnStatusMessage(status, error)
+      val connectedAtEpochMs = pigeonVar_list[2] as Long?
+      return VpnStatusMessage(status, error, connectedAtEpochMs)
     }
   }
   fun toList(): List<Any?> {
     return listOf(
       status,
       error,
+      connectedAtEpochMs,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -300,22 +295,19 @@ data class VpnStatusMessage (
       return true
     }
     val other = other as VpnStatusMessage
-    return VpnApiPigeonUtils.deepEquals(this.status, other.status) && VpnApiPigeonUtils.deepEquals(this.error, other.error)
+    return VpnApiPigeonUtils.deepEquals(this.status, other.status) && VpnApiPigeonUtils.deepEquals(this.error, other.error) && VpnApiPigeonUtils.deepEquals(this.connectedAtEpochMs, other.connectedAtEpochMs)
   }
 
   override fun hashCode(): Int {
     var result = javaClass.hashCode()
     result = 31 * result + VpnApiPigeonUtils.deepHash(this.status)
     result = 31 * result + VpnApiPigeonUtils.deepHash(this.error)
+    result = 31 * result + VpnApiPigeonUtils.deepHash(this.connectedAtEpochMs)
     return result
   }
 }
 
-/**
- * A single log line emitted by the core (xray / tun2socks).
- *
- * Generated class from Pigeon that represents data sent in messages.
- */
+/** Generated class from Pigeon that represents data sent in messages. */
 data class VpnLogMessage (
   val level: String,
   val message: String,
@@ -361,11 +353,7 @@ data class VpnLogMessage (
   }
 }
 
-/**
- * Cumulative traffic counters since the tunnel came up.
- *
- * Generated class from Pigeon that represents data sent in messages.
- */
+/** Generated class from Pigeon that represents data sent in messages. */
 data class VpnTrafficMessage (
   val uplinkBytes: Long,
   val downlinkBytes: Long
@@ -520,7 +508,6 @@ private open class VpnApiPigeonCodec : StandardMessageCodec() {
 interface VpnConnection {
   fun start(config: VpnConfigMessage, callback: (Result<VpnResult>) -> Unit)
   fun stop(callback: (Result<VpnResult>) -> Unit)
-  /** Source of truth queried on resume to re-sync the UI. */
   fun getStatus(): VpnStatusMessage
 
   companion object {

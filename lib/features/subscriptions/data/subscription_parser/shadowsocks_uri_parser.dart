@@ -23,10 +23,10 @@ class ShadowsocksUriParser {
         .where((l) => l.trim().isNotEmpty);
     final result = <VpnServer>[];
 
-    for (final line in lines) {
+    for (final (index, line) in lines.indexed) {
       if (!isShadowsocks(line)) continue;
       try {
-        final server = _parseOne(line.trim(), sourceId);
+        final server = _parseOne(line.trim(), sourceId, index);
         if (server != null) result.add(server);
       } catch (e) {
         _talker.warning('Parser: skipped a broken ss:// link -> $e');
@@ -35,7 +35,7 @@ class ShadowsocksUriParser {
     return result;
   }
 
-  VpnServer? _parseOne(String line, String sourceId) {
+  VpnServer? _parseOne(String line, String sourceId, int index) {
     var body = line.substring('ss://'.length);
 
     String title = '';
@@ -93,7 +93,7 @@ class ShadowsocksUriParser {
     );
 
     return VpnServer(
-      id: '$host:$port:$method',
+      id: '$host:$port:$method:#$index',
       subscriptionId: sourceId,
       title: title,
       countryCode: _countryCodeExtractor.extract(title),
@@ -101,7 +101,6 @@ class ShadowsocksUriParser {
     );
   }
 
-  // Userinfo is either base64url(method:password) or a percent-encoded method:password.
   (String, String)? _decodeUserInfo(String userInfo) {
     final decoded = _tryBase64(userInfo) ?? Uri.decodeComponent(userInfo);
     return _splitOnFirstColon(decoded);

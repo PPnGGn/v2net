@@ -5,10 +5,10 @@ import 'package:talker_flutter/talker_flutter.dart';
 abstract class LoggerModule {
   @lazySingleton
   Talker get talker => TalkerFlutter.init(
-        settings: TalkerSettings(
-          useConsoleLogs: true,
-          useHistory: true,
-          maxHistoryItems: 100, 
-        ),
-      );
+    settings: TalkerSettings(
+      useConsoleLogs: true,
+      useHistory: true,
+      maxHistoryItems: 100,
+    ),
+  );
 }
