@@ -3,7 +3,7 @@ package com.v2net
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import com.v2net.mobile.Handler as CoreLogHandler
+import com.v2net.android.Handler as CoreLogHandler
 
 object VpnEventBridge : CoreLogHandler {
 

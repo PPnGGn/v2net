@@ -54,6 +54,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/.kotlin/
 
 # Native tunnel core (gomobile); build via `make build-core-android` / `make build-core-ios` / `make build-core-mac`
 android/app/libs/v2netcore.aar

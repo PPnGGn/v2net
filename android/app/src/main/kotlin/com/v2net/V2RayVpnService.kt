@@ -13,7 +13,7 @@ import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import com.v2net.mobile.Mobile
+import com.v2net.android.Android
 
 class V2RayVpnService : VpnService() {
 
@@ -50,7 +50,7 @@ class V2RayVpnService : VpnService() {
         isStopping = false
         startForegroundWithNotification(buildNotification("Подключение…"))
         VpnEventBridge.notifyStatus(VpnStatus.CONNECTING)
-        Mobile.setHandler(VpnEventBridge)
+        Android.setHandler(VpnEventBridge)
         setupVpn(configJson)
 
         return START_STICKY
@@ -71,7 +71,7 @@ class V2RayVpnService : VpnService() {
             localTunnel = tunnel
 
             val fd = tunnel.detachFd()
-            Mobile.start(configJson, fd.toLong(), SOCKS_PORT.toLong())
+            Android.start(configJson, fd.toLong(), SOCKS_PORT.toLong())
             Log.d("VPN_SERVICE", "Xray + tun2socks started, fd=$fd, port=$SOCKS_PORT")
 
             val connectedAtMs = System.currentTimeMillis()
@@ -92,7 +92,7 @@ class V2RayVpnService : VpnService() {
                     override fun run() {
                         val stats =
                                 try {
-                                    Mobile.queryTraffic()
+                                    Android.queryTraffic()
                                 } catch (e: Exception) {
                                     Log.w("VPN_SERVICE", "queryTraffic failed: ${e.message}")
                                     null
@@ -134,7 +134,7 @@ class V2RayVpnService : VpnService() {
 
         try {
             // core closes the TUN fd on the native side
-            Mobile.stop()
+            Android.stop()
         } catch (e: Exception) {
             Log.e("VPN_SERVICE", "Failed to stop core: ${e.message}")
         }
