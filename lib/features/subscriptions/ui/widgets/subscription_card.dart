@@ -27,126 +27,134 @@ class SubscriptionCard extends StatefulWidget {
 }
 
 class _SubscriptionCardState extends State<SubscriptionCard> {
-  bool _expanded = true;
+  late final ExpansibleController _controller = ExpansibleController()..expand();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final sub = widget.stored.subscription;
     return Container(
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: AppColors.gray181F25,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.border),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          InkWell(
-            borderRadius: BorderRadius.circular(20),
-            onTap: () => setState(() => _expanded = !_expanded),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
-              child: Row(
-                children: [
-                  AnimatedRotation(
-                    turns: _expanded ? 0.25 : 0,
-                    duration: const Duration(milliseconds: 150),
-                    child: const Icon(
-                      Icons.chevron_right_rounded,
+      child: Expansible(
+        key: PageStorageKey<String>(sub.id),
+        controller: _controller,
+        headerBuilder: (context, animation) => InkWell(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          onTap: _controller.toggle,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
+            child: Row(
+              children: [
+                RotationTransition(
+                  turns: Tween<double>(begin: 0, end: 0.25).animate(animation),
+                  child: const Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.grayA9BAC6,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        sub.name,
+                        style: const TextStyle(
+                          color: AppColors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${widget.stored.servers.length} серверов',
+                        style: const TextStyle(
+                          color: AppColors.grayA9BAC6,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Обновлено: ${formatUpdatedAt(sub.lastUpdatedAt)}',
+                        style: const TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (widget.isRefreshing)
+                  const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                else
+                  PopupMenuButton<void>(
+                    color: AppColors.gray2E2E3A,
+                    icon: const Icon(
+                      Icons.more_vert_rounded,
                       color: AppColors.grayA9BAC6,
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          sub.name,
-                          style: const TextStyle(
-                            color: AppColors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${widget.stored.servers.length} серверов',
-                          style: const TextStyle(
-                            color: AppColors.grayA9BAC6,
-                            fontSize: 13,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Обновлено: ${formatUpdatedAt(sub.lastUpdatedAt)}',
-                          style: const TextStyle(
-                            color: AppColors.textMuted,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (widget.isRefreshing)
-                    const Padding(
-                      padding: EdgeInsets.all(12),
-                      child: SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    )
-                  else
-                    PopupMenuButton<void>(
-                      color: AppColors.gray2E2E3A,
-                      icon: const Icon(
-                        Icons.more_vert_rounded,
-                        color: AppColors.grayA9BAC6,
-                      ),
-                      itemBuilder: (context) => [
-                        if (widget.onRefresh != null)
-                          PopupMenuItem(
-                            onTap: widget.onRefresh,
-                            child: const Row(
-                              children: [
-                                Icon(
-                                  Icons.refresh_rounded,
-                                  color: AppColors.grayA9BAC6,
-                                  size: 20,
-                                ),
-                                SizedBox(width: 10),
-                                Text(
-                                  'Обновить подписку',
-                                  style: TextStyle(color: AppColors.white),
-                                ),
-                              ],
-                            ),
-                          ),
+                    itemBuilder: (context) => [
+                      if (widget.onRefresh != null)
                         PopupMenuItem(
-                          onTap: widget.onDelete,
+                          onTap: widget.onRefresh,
                           child: const Row(
                             children: [
                               Icon(
-                                Icons.delete_outline_rounded,
-                                color: AppColors.redFF6A55,
+                                Icons.refresh_rounded,
+                                color: AppColors.grayA9BAC6,
                                 size: 20,
                               ),
                               SizedBox(width: 10),
                               Text(
-                                'Удалить подписку',
+                                'Обновить подписку',
                                 style: TextStyle(color: AppColors.white),
                               ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                ],
-              ),
+                      PopupMenuItem(
+                        onTap: widget.onDelete,
+                        child: const Row(
+                          children: [
+                            Icon(
+                              Icons.delete_outline_rounded,
+                              color: AppColors.redFF6A55,
+                              size: 20,
+                            ),
+                            SizedBox(width: 10),
+                            Text(
+                              'Удалить подписку',
+                              style: TextStyle(color: AppColors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
             ),
           ),
-          if (_expanded) ...[
+        ),
+        bodyBuilder: (context, animation) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
             const Divider(color: AppColors.border, height: 1),
             for (final server in widget.stored.servers)
               _ServerRow(
@@ -156,7 +164,7 @@ class _SubscriptionCardState extends State<SubscriptionCard> {
               ),
             const SizedBox(height: 4),
           ],
-        ],
+        ),
       ),
     );
   }

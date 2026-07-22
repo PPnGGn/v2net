@@ -55,6 +55,10 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Native tunnel core (gomobile); build via `make build-core-android` / `make build-core-ios`
+android/app/libs/v2netcore.aar
+ios/Frameworks/
+
 # Claude Code / AI agents
 .claude/
 .agents/

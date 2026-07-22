@@ -265,10 +265,6 @@ data class VpnConfigMessage (
 data class VpnStatusMessage (
   val status: VpnStatus,
   val error: String? = null,
-  /**
-   * Wall-clock epoch millis when the tunnel became connected. Set once per
-   * session by the native side so the Flutter timer survives app restarts.
-   */
   val connectedAtEpochMs: Long? = null
 )
  {

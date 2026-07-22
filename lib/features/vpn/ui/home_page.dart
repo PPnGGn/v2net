@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:v2net/app/di/injector.dart';
 import 'package:v2net/app/theme.dart';
 import 'package:v2net/features/subscriptions/cubit/subscriptions_cubit.dart';
-import 'package:v2net/features/subscriptions/ui/add_subscription_sheet.dart';
+import 'package:v2net/features/subscriptions/ui/add_subscription_dialog.dart';
 import 'package:v2net/features/subscriptions/ui/widgets/empty_subscriptions.dart';
 import 'package:v2net/features/subscriptions/ui/widgets/subscription_card.dart';
 import 'package:v2net/features/vpn/cubit/vpn_cubit.dart';
@@ -32,7 +32,7 @@ class HomePage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.add_circle_outline),
             tooltip: 'Добавить подписку',
-            onPressed: () => showAddSubscriptionSheet(context),
+            onPressed: () => showAddSubscriptionDialog(context),
           ),
           const SizedBox(width: 4),
         ],
