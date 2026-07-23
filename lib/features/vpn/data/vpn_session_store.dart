@@ -22,6 +22,4 @@ class VpnSessionStore {
 
   Future<void> save(VpnServer server) =>
       _prefs.setString(_key, jsonEncode(server.toJson()));
-
-  Future<void> clear() => _prefs.remove(_key);
 }

@@ -504,7 +504,7 @@ private open class VpnApiPigeonCodec : StandardMessageCodec() {
 interface VpnConnection {
   fun start(config: VpnConfigMessage, callback: (Result<VpnResult>) -> Unit)
   fun stop(callback: (Result<VpnResult>) -> Unit)
-  fun getStatus(): VpnStatusMessage
+  fun getStatus(callback: (Result<VpnStatusMessage>) -> Unit)
 
   companion object {
     /** The codec used by VpnConnection. */
@@ -557,12 +557,15 @@ interface VpnConnection {
         val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.v2net.VpnConnection.getStatus$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { _, reply ->
-            val wrapped: List<Any?> = try {
-              listOf(api.getStatus())
-            } catch (exception: Throwable) {
-              VpnApiPigeonUtils.wrapError(exception)
+            api.getStatus{ result: Result<VpnStatusMessage> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(VpnApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(VpnApiPigeonUtils.wrapResult(data))
+              }
             }
-            reply.reply(wrapped)
           }
         } else {
           channel.setMessageHandler(null)

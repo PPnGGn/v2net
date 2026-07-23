@@ -39,6 +39,7 @@ abstract class VpnConnection {
   VpnResult start(VpnConfigMessage config);
   @async
   VpnResult stop();
+  @async
   VpnStatusMessage getStatus();
 }
 

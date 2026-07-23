@@ -47,7 +47,9 @@ class MainActivity : FlutterActivity(), VpnConnection {
         super.cleanUpFlutterEngine(flutterEngine)
     }
 
-    override fun getStatus(): VpnStatusMessage = VpnEventBridge.currentStatus()
+    override fun getStatus(callback: (Result<VpnStatusMessage>) -> Unit) {
+        callback(Result.success(VpnEventBridge.currentStatus()))
+    }
 
     override fun start(config: VpnConfigMessage, callback: (Result<VpnResult>) -> Unit) {
         Log.d("VPN_BRIDGE", "Requesting VPN start with dynamic config...")

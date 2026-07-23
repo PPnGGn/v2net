@@ -151,10 +151,15 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         IosSetHandler(logBridge)
         TunnelLog.lifecycle.notice("startTunnel: entry; options keys=\(options?.keys.map(String.init(describing:)).joined(separator: ",") ?? "nil", privacy: .public)")
 
-        guard let configJson = options?["configJson"] as? String,
-              let socksPort = options?["socksPort"] as? NSNumber
-        else {
-            TunnelLog.lifecycle.error("startTunnel: missing configJson/socksPort; aborting")
+        let providerConfig = (protocolConfiguration as? NETunnelProviderProtocol)?.providerConfiguration
+
+        let configJson = (options?["configJson"] as? String) ?? (providerConfig?["configJson"] as? String)
+        let socksPort = (options?["socksPort"] as? NSNumber)
+            ?? (providerConfig?["socksPort"] as? NSNumber)
+            ?? (providerConfig?["socksPort"] as? Int).map(NSNumber.init(value:))
+
+        guard let configJson, let socksPort else {
+            TunnelLog.lifecycle.error("startTunnel: missing configJson/socksPort in both options and providerConfiguration; aborting")
             completionHandler(NSError(
                 domain: "vpn.oko.XrayTunnel",
                 code: 1,
@@ -198,24 +203,78 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
             }
 
             TunnelLog.lifecycle.notice("startTunnel: completed successfully; tunnel is up")
-            completionHandler(nil)
+         self.enableOnDemand {
+                completionHandler(nil)
+            }
         }
     }
 
     override func stopTunnel(with reason: NEProviderStopReason, completionHandler: @escaping () -> Void) {
         TunnelLog.lifecycle.notice("stopTunnel: reason=\(reason.rawValue, privacy: .public)")
 
-     
         flowBridge?.close()
         flowBridge = nil
         TunnelLog.lifecycle.notice("stopTunnel: flow bridge closed")
 
-        DispatchQueue.global(qos: .userInitiated).async {
-            var stopError: NSError?
-            _ = IosStop(&stopError)
-            TunnelLog.lifecycle.notice("stopTunnel: IosStop returned; stopError=\(stopError?.localizedDescription ?? "nil", privacy: .public)")
-            IosSetHandler(nil)
-            completionHandler()
+        let finishStop = {
+            DispatchQueue.global(qos: .userInitiated).async {
+                var stopError: NSError?
+                _ = IosStop(&stopError)
+                TunnelLog.lifecycle.notice("stopTunnel: IosStop returned; stopError=\(stopError?.localizedDescription ?? "nil", privacy: .public)")
+                IosSetHandler(nil)
+                completionHandler()
+            }
+        }
+
+        guard reason == .userInitiated else {
+            finishStop()
+            return
+        }
+        disableOnDemand(completion: finishStop)
+    }
+
+    private func disableOnDemand(completion: @escaping () -> Void) {
+        NETunnelProviderManager.loadAllFromPreferences { managers, error in
+            guard let manager = managers?.first(where: {
+                ($0.protocolConfiguration as? NETunnelProviderProtocol)?.providerBundleIdentifier == Bundle.main.bundleIdentifier
+            }), manager.isOnDemandEnabled else {
+                completion()
+                return
+            }
+            manager.isOnDemandEnabled = false
+            manager.saveToPreferences { error in
+                if let error {
+                    TunnelLog.lifecycle.error("disableOnDemand: save failed: \(error.localizedDescription, privacy: .public)")
+                } else {
+                    TunnelLog.lifecycle.notice("disableOnDemand: on-demand disabled (userInitiated stop)")
+                }
+                completion()
+            }
+        }
+    }
+
+    private func enableOnDemand(completion: @escaping () -> Void) {
+        NETunnelProviderManager.loadAllFromPreferences { managers, error in
+            guard let manager = managers?.first(where: {
+                ($0.protocolConfiguration as? NETunnelProviderProtocol)?.providerBundleIdentifier == Bundle.main.bundleIdentifier
+            }) else {
+                completion()
+                return
+            }
+            manager.onDemandRules = [NEOnDemandRuleConnect()]
+            guard !manager.isOnDemandEnabled else {
+                completion()
+                return
+            }
+            manager.isOnDemandEnabled = true
+            manager.saveToPreferences { error in
+                if let error {
+                    TunnelLog.lifecycle.error("enableOnDemand: save failed: \(error.localizedDescription, privacy: .public)")
+                } else {
+                    TunnelLog.lifecycle.notice("enableOnDemand: on-demand re-armed after successful start")
+                }
+                completion()
+            }
         }
     }
 

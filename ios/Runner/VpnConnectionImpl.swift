@@ -8,19 +8,12 @@ final class VpnConnectionImpl: NSObject, VpnConnection {
 
     private static let extensionBundleID = "vpn.oko.XrayTunnel"
     private static let socksPort = 10808
-    private static let maxReconnectAttempts = 3
 
     private let eventReceiver: VpnEventReceiver
     private var manager: NETunnelProviderManager?
     private var statusObserver: NSObjectProtocol?
     private var trafficTimer: Timer?
-    private var connectedAt: Date?
     private var lastSentStatus: VpnStatus?
-
-    // Auto-reconnect
-    private var userInitiatedStop = false
-    private var reconnectAttempts = 0
-    private var lastStartOptions: [String: NSObject]?
 
     init(binaryMessenger: FlutterBinaryMessenger) {
         self.eventReceiver = VpnEventReceiver(binaryMessenger: binaryMessenger)
@@ -41,9 +34,6 @@ final class VpnConnectionImpl: NSObject, VpnConnection {
 
 
     func start(config: VpnConfigMessage, completion: @escaping (Result<VpnResult, Error>) -> Void) {
-        userInitiatedStop = false
-        reconnectAttempts = 0
-        
         loadOrCreateManager { [weak self] result in
             switch result {
             case .failure(let error):
@@ -55,18 +45,44 @@ final class VpnConnectionImpl: NSObject, VpnConnection {
     }
 
     func stop(completion: @escaping (Result<VpnResult, Error>) -> Void) {
-        userInitiatedStop = true
         stopTrafficPolling()
-        manager?.isOnDemandEnabled = false
-        manager?.saveToPreferences { _ in }
         manager?.connection.stopVPNTunnel()
         completion(.success(VpnResult(successful: true)))
     }
 
-    func getStatus() throws -> VpnStatusMessage {
+    func getStatus(completion: @escaping (Result<VpnStatusMessage, Error>) -> Void) {
+        guard manager != nil else {
+            loadExistingManager { [weak self] in
+                completion(.success(self?.currentStatusMessage() ?? VpnStatusMessage(status: .disconnected, connectedAtEpochMs: nil)))
+            }
+            return
+        }
+        completion(.success(currentStatusMessage()))
+    }
+
+    private func loadExistingManager(completion: @escaping () -> Void) {
+        NETunnelProviderManager.loadAllFromPreferences { [weak self] managers, error in
+            if let error {
+                appLog.error("loadExistingManager: \(error.localizedDescription, privacy: .public)")
+            }
+            self?.manager = managers?.first {
+                ($0.protocolConfiguration as? NETunnelProviderProtocol)?
+                    .providerBundleIdentifier == Self.extensionBundleID
+            }
+            completion()
+        }
+    }
+
+    private func currentStatusMessage() -> VpnStatusMessage {
         let status: VpnStatus = manager.map { vpnStatus(from: $0.connection.status) } ?? .disconnected
-        let connectedAtMs = connectedAt.map { Int64($0.timeIntervalSince1970 * 1000) }
-        return VpnStatusMessage(status: status, connectedAtEpochMs: connectedAtMs)
+        if status == .connected {
+            startTrafficPolling()
+        }
+        return VpnStatusMessage(status: status, connectedAtEpochMs: connectedAtEpochMs())
+    }
+
+    private func connectedAtEpochMs() -> Int64? {
+        manager?.connection.connectedDate.map { Int64($0.timeIntervalSince1970 * 1000) }
     }
 
 
@@ -98,9 +114,7 @@ final class VpnConnectionImpl: NSObject, VpnConnection {
                 manager.localizedDescription = "v2net"
             }
             
-            manager.isEnabled = true
-            manager.onDemandRules = [NEOnDemandRuleConnect()]
-            manager.isOnDemandEnabled = true
+          manager.isEnabled = true
             self?.manager = manager
             completion(.success(manager))
         }
@@ -111,6 +125,12 @@ final class VpnConnectionImpl: NSObject, VpnConnection {
         config: VpnConfigMessage,
         completion: @escaping (Result<VpnResult, Error>) -> Void
     ) {
+        if let proto = manager.protocolConfiguration as? NETunnelProviderProtocol {
+            proto.providerConfiguration = [
+                "configJson": config.configJson,
+                "socksPort": Self.socksPort,
+            ]
+        }
         manager.saveToPreferences { error in
             if let error {
                 completion(.success(VpnResult(successful: false, error: error.localizedDescription)))
@@ -126,7 +146,6 @@ final class VpnConnectionImpl: NSObject, VpnConnection {
                         "configJson": config.configJson as NSObject,
                         "socksPort": NSNumber(value: Self.socksPort),
                     ]
-                    self.lastStartOptions = options
                     let session = manager.connection as! NETunnelProviderSession
                     appLog.notice("startTunnel: calling startVPNTunnel; current status.rawValue=\(session.status.rawValue, privacy: .public)")
                     
@@ -149,22 +168,10 @@ final class VpnConnectionImpl: NSObject, VpnConnection {
         let status = connection.status
         appLog.notice("handleStatusChange: NEVPNStatus.rawValue=\(status.rawValue, privacy: .public) -> \(String(describing: self.vpnStatus(from: status)), privacy: .public)")
 
-        if (status == .disconnected || status == .invalid),
-           !userInitiatedStop,
-           reconnectAttempts < Self.maxReconnectAttempts {
-            reconnectAttempts += 1
-            appLog.notice("handleStatusChange: unexpected disconnect (rawValue=\(status.rawValue, privacy: .public)); scheduling app-level retry \(self.reconnectAttempts, privacy: .public)/\(Self.maxReconnectAttempts, privacy: .public)")
-            scheduleReconnect()
-            return
-        }
-
         switch status {
         case .connected:
-            if connectedAt == nil { connectedAt = Date() }
-            reconnectAttempts = 0
             startTrafficPolling()
         case .disconnected, .invalid:
-            connectedAt = nil
             stopTrafficPolling()
         default:
             break
@@ -178,28 +185,8 @@ final class VpnConnectionImpl: NSObject, VpnConnection {
         }
         lastSentStatus = vpnStat
 
-        let connectedAtMs = connectedAt.map { Int64($0.timeIntervalSince1970 * 1000) }
-        let msg = VpnStatusMessage(status: vpnStat, connectedAtEpochMs: connectedAtMs)
+        let msg = VpnStatusMessage(status: vpnStat, connectedAtEpochMs: connectedAtEpochMs())
         eventReceiver.onStatusChanged(message: msg) { _ in }
-    }
-
-    private func scheduleReconnect() {
-        let delay = pow(2.0, Double(reconnectAttempts))  
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-            guard let self,
-                  !self.userInitiatedStop,
-                  let manager = self.manager,
-                  let session = manager.connection as? NETunnelProviderSession,
-                  session.status == .disconnected || session.status == .invalid,
-                  let options = self.lastStartOptions
-            else { return }
-            do {
-                appLog.notice("scheduleReconnect: retrying startVPNTunnel (attempt \(self.reconnectAttempts, privacy: .public)/\(Self.maxReconnectAttempts, privacy: .public))")
-                try session.startVPNTunnel(options: options)
-            } catch {
-                appLog.error("scheduleReconnect: startVPNTunnel threw: \(error.localizedDescription, privacy: .public)")
-            }
-        }
     }
 
     private func vpnStatus(from status: NEVPNStatus) -> VpnStatus {
@@ -214,6 +201,8 @@ final class VpnConnectionImpl: NSObject, VpnConnection {
 
     private func startTrafficPolling() {
         guard trafficTimer == nil else { return }
+        pollTraffic()
+        pollLogs()
         trafficTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             self?.pollTraffic()
             self?.pollLogs()
