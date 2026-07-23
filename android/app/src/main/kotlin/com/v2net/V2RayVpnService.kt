@@ -61,8 +61,11 @@ class V2RayVpnService : VpnService() {
             val tunnel =
                     Builder()
                             .addAddress("10.0.0.2", 24)
-                            .addDnsServer("8.8.8.8")
+                            .addAddress("fd00:10:10:10::2", 64)
+                            .addDnsServer("1.1.1.1")
+                            .addDnsServer("1.0.0.1")
                             .addRoute("0.0.0.0", 0)
+                            .addRoute("::", 0)
                             .addDisallowedApplication(packageName)
                             .setSession("v2net")
                             .setMtu(1500)
