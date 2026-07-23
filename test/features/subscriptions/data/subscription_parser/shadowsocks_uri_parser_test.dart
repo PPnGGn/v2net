@@ -59,7 +59,7 @@ void main() {
 
       expect(servers, hasLength(1));
       final server = servers.single;
-      expect(server.id, equals('example.com:8388:aes-256-gcm'));
+      expect(server.id, equals('example.com:8388:aes-256-gcm:#0'));
       expect(server.subscriptionId, equals('my-subscription'));
       expect(server.title, equals('🇳🇱 Netherlands #1'));
       expect(server.countryCode, equals('NL'));
@@ -79,7 +79,7 @@ void main() {
 
       expect(servers, hasLength(1));
       final server = servers.single;
-      expect(server.id, equals('1.2.3.4:443:chacha20-ietf-poly1305'));
+      expect(server.id, equals('1.2.3.4:443:chacha20-ietf-poly1305:#0'));
       expect(server.title, equals('Legacy'));
       expect(server.configJson, contains('"password":"secret"'));
     });
@@ -101,7 +101,7 @@ void main() {
 
       final servers = parser.parseLines(link, 'sub');
 
-      expect(servers.single.id, equals('example.com:8388:aes-256-gcm'));
+      expect(servers.single.id, equals('example.com:8388:aes-256-gcm:#0'));
     });
 
     test('falls back to "host:port" as title when there is no fragment', () {

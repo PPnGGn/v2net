@@ -38,7 +38,7 @@ void main() {
 
       expect(servers, hasLength(1));
       final server = servers.first;
-      expect(server.id, equals('vnext.example.com:443:uuid-vnext'));
+      expect(server.id, equals('vnext.example.com:443:uuid-vnext:#0'));
       expect(server.subscriptionId, equals('my-subscription'));
       expect(server.title, equals('🇩🇪 Germany #1'));
       expect(server.countryCode, equals('DE'));
@@ -66,7 +66,7 @@ void main() {
 
       final servers = parser.parse(json, 'my-subscription');
 
-      expect(servers.single.id, equals('flat.example.com:8443:uuid-flat'));
+      expect(servers.single.id, equals('flat.example.com:8443:uuid-flat:#0'));
     });
 
     test('matches outbound tags starting with "proxy-"', () {
@@ -171,7 +171,7 @@ void main() {
 
       final servers = parser.parse(json, 'my-subscription');
 
-      expect(servers.single.id, equals('host.example.com:443'));
+      expect(servers.single.id, equals('host.example.com:443:#0'));
     });
 
     test('skips a broken object but keeps the valid ones around it', () {
@@ -200,11 +200,26 @@ void main() {
       expect(servers.single.title, equals('Valid One'));
     });
 
-    test('throws when the top-level JSON value is not an array', () {
-      expect(
-        () => parser.parse(jsonEncode({'not': 'an array'}), 'sub'),
-        throwsA(isA<TypeError>()),
-      );
+    test('accepts a single top-level object (not wrapped in an array)', () {
+      final json = jsonEncode({
+        'remarks': 'Single Object',
+        'outbounds': [
+          {
+            'tag': 'proxy',
+            'settings': {
+              'address': 'host.example.com',
+              'port': 443,
+              'users': [
+                {'id': 'uuid'},
+              ],
+            },
+          },
+        ],
+      });
+
+      final servers = parser.parse(json, 'my-subscription');
+
+      expect(servers.single.title, equals('Single Object'));
     });
 
     test(
@@ -264,6 +279,176 @@ void main() {
         expect(rules[2]['protocol'], equals(['bittorrent']));
       },
     );
+  });
+
+  group('CustomJsonParser routing sanitization', () {
+    String fleetEntry() => jsonEncode([
+      {
+        'remarks': 'NL #1',
+        'outbounds': [
+          {
+            'tag': 'proxy',
+            'protocol': 'vless',
+            'settings': {
+              'vnext': [
+                {
+                  'address': '45.195.111.15',
+                  'port': 443,
+                  'users': [
+                    {'id': 'uuid-1'},
+                  ],
+                },
+              ],
+            },
+          },
+          {'tag': 'direct', 'protocol': 'freedom', 'settings': {}},
+          {'tag': 'block', 'protocol': 'blackhole', 'settings': {}},
+        ],
+        'observatory': {
+          'subjectSelector': ['proxy'],
+          'probeUrl': 'http://www.gstatic.com/generate_204',
+        },
+        'burstObservatory': {
+          'subjectSelector': ['proxy'],
+        },
+        'routing': {
+          'balancers': [
+            {
+              'tag': 'balancer',
+              'selector': ['proxy'],
+            },
+          ],
+          'rules': [
+            {
+              'type': 'field',
+              'ip': ['45.195.111.15'],
+              'outboundTag': 'proxy-45-195-111-15-direct',
+            },
+            {
+              'type': 'field',
+              'ip': ['45.198.96.153'],
+              'outboundTag': 'proxy-45-198-96-153-direct',
+            },
+            {'type': 'field', 'network': 'tcp,udp', 'balancerTag': 'balancer'},
+            {
+              'type': 'field',
+              'protocol': ['bittorrent'],
+              'outboundTag': 'direct',
+            },
+          ],
+        },
+      },
+    ]);
+
+    Map<String, dynamic> configOf(String rawJson) =>
+        jsonDecode(parser.parse(rawJson, 'sub').single.configJson)
+            as Map<String, dynamic>;
+
+    Set<String> outboundTagsOf(Map<String, dynamic> config) =>
+        (config['outbounds'] as List)
+            .map((o) => (o as Map<String, dynamic>)['tag'] as String)
+            .toSet();
+
+    test('drops routing rules that reference a non-existent outbound tag', () {
+      final config = configOf(fleetEntry());
+      final rules = (config['routing']['rules'] as List)
+          .cast<Map<String, dynamic>>();
+      final referenced = rules
+          .map((r) => r['outboundTag'])
+          .whereType<String>()
+          .toSet();
+
+      expect(referenced.difference(outboundTagsOf(config)), isEmpty);
+      expect(referenced, contains('direct'));
+      expect(referenced, isNot(contains('proxy-45-195-111-15-direct')));
+      expect(referenced, isNot(contains('proxy-45-198-96-153-direct')));
+    });
+
+    test('removes observatory and burstObservatory', () {
+      final config = configOf(fleetEntry());
+      expect(config.containsKey('observatory'), isFalse);
+      expect(config.containsKey('burstObservatory'), isFalse);
+    });
+
+    test('removes balancers and drops rules bound to them', () {
+      final config = configOf(fleetEntry());
+      expect(config['routing'].containsKey('balancers'), isFalse);
+      final rules = (config['routing']['rules'] as List)
+          .cast<Map<String, dynamic>>();
+      expect(rules.any((r) => r.containsKey('balancerTag')), isFalse);
+    });
+
+    test('keeps proxy first so unmatched traffic defaults to it', () {
+      final config = configOf(fleetEntry());
+      final outbounds = (config['outbounds'] as List)
+          .cast<Map<String, dynamic>>();
+      expect(outbounds.first['tag'], equals('proxy'));
+    });
+
+    test('synthesizes direct/block when the subscription omits them', () {
+      final json = jsonEncode([
+        {
+          'remarks': 'Bare',
+          'outbounds': [
+            {
+              'tag': 'proxy',
+              'protocol': 'vless',
+              'settings': {
+                'vnext': [
+                  {
+                    'address': 'host.example.com',
+                    'port': 443,
+                    'users': [
+                      {'id': 'uuid'},
+                    ],
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ]);
+
+      expect(outboundTagsOf(configOf(json)), containsAll(['direct', 'block']));
+    });
+
+    test('repoints rules referencing the original proxy tag to "proxy"', () {
+      final json = jsonEncode([
+        {
+          'remarks': 'Renamed',
+          'outbounds': [
+            {
+              'tag': 'proxy-1',
+              'protocol': 'vless',
+              'settings': {
+                'vnext': [
+                  {
+                    'address': 'host.example.com',
+                    'port': 443,
+                    'users': [
+                      {'id': 'uuid'},
+                    ],
+                  },
+                ],
+              },
+            },
+          ],
+          'routing': {
+            'rules': [
+              {
+                'type': 'field',
+                'domain': ['domain:example.com'],
+                'outboundTag': 'proxy-1',
+              },
+            ],
+          },
+        },
+      ]);
+
+      final rules = (configOf(json)['routing']['rules'] as List)
+          .cast<Map<String, dynamic>>();
+      expect(rules.single['outboundTag'], equals('proxy'));
+    });
   });
 }
 

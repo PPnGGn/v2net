@@ -56,7 +56,7 @@ void main() {
       final server = servers.first;
       expect(
         server.id,
-        equals('example.com:443:11111111-1111-1111-1111-111111111111'),
+        equals('example.com:443:11111111-1111-1111-1111-111111111111:#0'),
       );
       expect(server.subscriptionId, equals('my-subscription'));
       expect(server.title, equals('🇳🇱 Netherlands #1'));

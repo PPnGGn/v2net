@@ -49,11 +49,7 @@ class CustomJsonParser {
             title: title,
             countryCode: _countryCodeExtractor.extract(title),
             configJson: jsonEncode(
-              _enableStats(
-                _stripUnsupportedRouting(config),
-                proxyOutbound,
-                normalizedProxy,
-              ),
+              _buildServerConfig(config, proxyOutbound, normalizedProxy),
             ),
           ),
         );
@@ -75,19 +71,22 @@ class CustomJsonParser {
     switch (protocol) {
       case 'vless':
         if (settings.containsKey('vnext')) return outbound;
+        final users = settings['users'];
         normalized = {
           'vnext': [
             {
               'address': settings['address'],
               'port': settings['port'],
-              'users': [
-                {
-                  'id': settings['id'],
-                  'encryption': settings['encryption'] ?? 'none',
-                  'flow': settings['flow'] ?? '',
-                  'level': settings['level'] ?? 8,
-                },
-              ],
+              'users': users is List && users.isNotEmpty
+                  ? users
+                  : [
+                      {
+                        'id': settings['id'],
+                        'encryption': settings['encryption'] ?? 'none',
+                        'flow': settings['flow'] ?? '',
+                        'level': settings['level'] ?? 8,
+                      },
+                    ],
             },
           ],
         };
@@ -110,36 +109,6 @@ class CustomJsonParser {
     return {...outbound, 'settings': normalized};
   }
 
-  Map<String, dynamic> _enableStats(
-    Map<String, dynamic> config,
-    Map<String, dynamic> originalProxyOutbound,
-    Map<String, dynamic> normalizedProxyOutbound,
-  ) {
-    final outbounds = (config['outbounds'] as List<dynamic>)
-        .map(
-          (o) => o == originalProxyOutbound
-              ? {...normalizedProxyOutbound, 'tag': 'proxy'}
-              : o,
-        )
-        .toList();
-
-    return {
-      ...config,
-      'outbounds': outbounds,
-      'stats': <String, dynamic>{},
-      'policy': {
-        ...?config['policy'] as Map<String, dynamic>?,
-        'system': {
-          ...?(config['policy'] as Map<String, dynamic>?)?['system']
-              as Map<String, dynamic>?,
-          'statsOutboundUplink': true,
-          'statsOutboundDownlink': true,
-        },
-      },
-    };
-  }
-
-  // Extracts (address, port, uuid) from a "vnext" or "servers" outbound shape.
   (String, int, String)? _extractAddressPort(Map<String, dynamic> settings) {
     if (settings.containsKey('vnext')) {
       final vnext = settings['vnext'] as List<dynamic>;
@@ -156,6 +125,11 @@ class CustomJsonParser {
       final port = _parsePort(node['port']);
       if (port == null) return null;
       return (node['address'] as String, port, '');
+    }
+    if (settings.containsKey('address')) {
+      final port = _parsePort(settings['port']);
+      if (port == null) return null;
+      return (settings['address'] as String, port, _extractUuid(settings));
     }
     return null;
   }
@@ -177,19 +151,97 @@ class CustomJsonParser {
     return port;
   }
 
+  Map<String, dynamic> _buildServerConfig(
+    Map<String, dynamic> config,
+    Map<String, dynamic> originalProxyOutbound,
+    Map<String, dynamic> normalizedProxyOutbound,
+  ) {
+    final originalProxyTag = originalProxyOutbound['tag'] as String? ?? '';
+    final proxyOutbound = {...normalizedProxyOutbound, 'tag': 'proxy'};
+
+    final extraOutbounds = (config['outbounds'] as List)
+        .cast<Map<String, dynamic>>()
+        .where((o) {
+          if (identical(o, originalProxyOutbound)) return false;
+          final tag = o['tag'] as String? ?? '';
+          return tag != 'proxy' && !tag.startsWith('proxy-');
+        });
+    final outbounds = <Map<String, dynamic>>[proxyOutbound, ...extraOutbounds];
+
+    final tags = outbounds.map((o) => o['tag'] as String? ?? '').toSet();
+    if (!tags.contains('direct')) {
+      outbounds.add(<String, dynamic>{
+        'protocol': 'freedom',
+        'settings': {'domainStrategy': 'UseIP'},
+        'tag': 'direct',
+      });
+    }
+    if (!tags.contains('block')) {
+      outbounds.add(<String, dynamic>{
+        'protocol': 'blackhole',
+        'settings': {
+          'response': {'type': 'http'},
+        },
+        'tag': 'block',
+      });
+    }
+    final validTags = outbounds.map((o) => o['tag'] as String? ?? '').toSet();
+
+    final result = {
+      ...config,
+      'outbounds': outbounds,
+      'stats': <String, dynamic>{},
+      'policy': {
+        ...?config['policy'] as Map<String, dynamic>?,
+        'system': {
+          ...?(config['policy'] as Map<String, dynamic>?)?['system']
+              as Map<String, dynamic>?,
+          'statsOutboundUplink': true,
+          'statsOutboundDownlink': true,
+        },
+      },
+    };
+
+    result.remove('observatory');
+    result.remove('burstObservatory');
+
+    final routing = _sanitizeRouting(
+      config['routing'],
+      validTags,
+      originalProxyTag,
+    );
+    if (routing == null) {
+      result.remove('routing');
+    } else {
+      result['routing'] = routing;
+    }
+
+    return result;
+  }
+
   static const _geoPrefixByField = {'domain': 'geosite:', 'ip': 'geoip:'};
   static const _ruleMetaKeys = {'type', 'outboundTag', 'balancerTag'};
 
-  Map<String, dynamic> _stripUnsupportedRouting(Map<String, dynamic> config) {
-    final routing = config['routing'];
-    if (routing is! Map<String, dynamic> || routing['rules'] is! List) {
-      return config;
-    }
+  Map<String, dynamic>? _sanitizeRouting(
+    dynamic routing,
+    Set<String> validTags,
+    String originalProxyTag,
+  ) {
+    if (routing is! Map<String, dynamic>) return null;
+
+    final result = Map<String, dynamic>.from(routing);
+    result.remove('balancers');
+
+    if (routing['rules'] is! List) return result;
 
     final rules = (routing['rules'] as List)
         .map((rule) {
           if (rule is! Map<String, dynamic>) return rule;
           final sanitized = Map<String, dynamic>.from(rule);
+          if (originalProxyTag != 'proxy' &&
+              sanitized['outboundTag'] == originalProxyTag) {
+            sanitized['outboundTag'] = 'proxy';
+          }
           _geoPrefixByField.forEach((field, prefix) {
             final values = sanitized[field];
             if (values is! List) return;
@@ -206,19 +258,33 @@ class CustomJsonParser {
         })
         .where((rule) {
           if (rule is! Map<String, dynamic>) return true;
+          if (rule.containsKey('balancerTag')) {
+            _talker.debug(
+              'Parser: dropped a routing rule bound to a removed balancer',
+            );
+            return false;
+          }
+          final outboundTag = rule['outboundTag'];
+          if (outboundTag is String && !validTags.contains(outboundTag)) {
+            _talker.debug(
+              'Parser: dropped a routing rule with non-existent outboundTag '
+              '"$outboundTag"',
+            );
+            return false;
+          }
           final hasMatcher = rule.keys.any((k) => !_ruleMetaKeys.contains(k));
           if (!hasMatcher) {
             _talker.debug(
-              'Parser: dropped a routing rule left with nothing to match after stripping geosite/geoip',
+              'Parser: dropped a routing rule left with nothing to match after '
+              'stripping geosite/geoip',
             );
+            return false;
           }
-          return hasMatcher;
+          return true;
         })
         .toList();
 
-    return {
-      ...config,
-      'routing': {...routing, 'rules': rules},
-    };
+    result['rules'] = rules;
+    return result;
   }
 }
