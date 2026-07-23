@@ -1,3 +1,4 @@
+import Network
 import NetworkExtension
 import os
 
@@ -146,6 +147,8 @@ final class PacketFlowBridge: NSObject, IosPacketFlowProtocol {
 final class PacketTunnelProvider: NEPacketTunnelProvider {
     private var flowBridge: PacketFlowBridge?
     private let logBridge = CoreLogBridge()
+    private let pathMonitor = NWPathMonitor()
+    private let pathMonitorQueue = DispatchQueue(label: "vpn.oko.xraytunnel.path")
 
     override func startTunnel(options: [String: NSObject]?, completionHandler: @escaping (Error?) -> Void) {
         IosSetHandler(logBridge)
@@ -203,15 +206,26 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
             }
 
             TunnelLog.lifecycle.notice("startTunnel: completed successfully; tunnel is up")
-         self.enableOnDemand {
+            self.startPathMonitor()
+            withTimeout(2, { done in self.enableOnDemand(completion: done) }) {
                 completionHandler(nil)
             }
         }
     }
 
+    private func startPathMonitor() {
+        pathMonitor.pathUpdateHandler = { path in
+            let ifaces = path.availableInterfaces.map { "\($0.type)" }.joined(separator: ",")
+            TunnelLog.lifecycle.notice(
+                "path change: status=\(String(describing: path.status), privacy: .public) ifaces=\(ifaces, privacy: .public) expensive=\(path.isExpensive, privacy: .public)")
+        }
+        pathMonitor.start(queue: pathMonitorQueue)
+    }
+
     override func stopTunnel(with reason: NEProviderStopReason, completionHandler: @escaping () -> Void) {
         TunnelLog.lifecycle.notice("stopTunnel: reason=\(reason.rawValue, privacy: .public)")
 
+        pathMonitor.cancel()
         flowBridge?.close()
         flowBridge = nil
         TunnelLog.lifecycle.notice("stopTunnel: flow bridge closed")
@@ -230,7 +244,28 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
             finishStop()
             return
         }
-        disableOnDemand(completion: finishStop)
+      withTimeout(2, { done in self.disableOnDemand(completion: done) }, then: finishStop)
+    }
+
+   
+    private func withTimeout(
+        _ seconds: TimeInterval,
+        _ work: (@escaping () -> Void) -> Void,
+        then completion: @escaping () -> Void
+    ) {
+        let lock = NSLock()
+        var didComplete = false
+        let completeOnce = {
+            lock.lock()
+            let already = didComplete
+            didComplete = true
+            lock.unlock()
+            if !already { completion() }
+        }
+        work(completeOnce)
+        DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + seconds) {
+            completeOnce()
+        }
     }
 
     private func disableOnDemand(completion: @escaping () -> Void) {
@@ -305,11 +340,12 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     }
 
     override func sleep(completionHandler: @escaping () -> Void) {
-        // Add code here to get ready to sleep.
+        TunnelLog.lifecycle.notice("sleep: device sleeping; freeing memory")
+        IosFreeMemory()
         completionHandler()
     }
 
     override func wake() {
-        // Add code here to wake up.
+        TunnelLog.lifecycle.notice("wake: device woke")
     }
 }
